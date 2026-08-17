@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+/* Dark mode via classe `.dark` na <html> (não prefers-color-scheme) — o
+   toggle em components/shell/ThemeToggle.tsx controla isso manualmente e
+   persiste em localStorage. Ver app/layout.tsx para o script anti-flash. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Paleta CoE Hiperautomação — shell v0.3 (sidebar) + identidade PSW Digital
+   (pswdigital.com.br: azul profundo + azul vivo, Poppins). Cores semânticas
+   do mockup (_giba_wsi-dashboard.html) preservadas: verde = criar/positivo,
+   amarelo/vermelho = prioridade média/baixa — nunca marca. */
+@theme {
+  /* primárias (legado — login e demais usos de pri/pril/acc) */
+  --color-pri: #183799;
+  --color-pril: #2341e1;
+  --color-acc: #00a878;
+
+  /* ações v0.3 */
+  --color-primary: #2341e1;        /* PSW azul vivo — botão primário, focus rings */
+  --color-primary-hover: #1c34b8;
+  --color-dark: #1e293b;           /* botão escuro — "Ações", "Próximo" (neutro) */
+
+  /* navegação (sidebar) — tons derivados do azul PSW */
+  --color-nav: #0f2159;            /* fundo navy profundo */
+  --color-nav-2: #1c3f8f;          /* topo do gradiente, próximo do --color-pri */
+  --color-nav-fg: #cbd5e1;         /* item inativo */
+  --color-nav-muted: #94a3b8;      /* labels/secções */
+  --color-nav-active: #2341e1;     /* item ativo — azul vivo PSW */
+
+  /* superfícies */
+  --color-bg: #f8fafc;
+  --color-wh: #ffffff;
+  --color-bdr: #e2e8f0;
+
+  /* texto */
+  --color-txt: #0f172a;
+  --color-mut: #64748b;
+
+  /* badges de ferramenta */
+  --color-rpa: #7c3aed;
+  --color-n8n: #ea580c;
+  --color-both: #0891b2;
+
+  /* badges de prioridade (semânticas do mockup — nunca a cor da marca) */
+  --color-grn: #22c55e;
+  --color-yel: #f59e0b;
+  --color-red: #ef4444;
+}
+
+/* Dark mode — sobrescreve só as 5 superfícies neutras (bg/wh/txt/mut/bdr).
+   Como quase todo o app consome cor via essas 5 tokens (gerando as classes
+   bg-bg/bg-wh/text-txt/text-mut/border-bdr), a maior parte da UI já vira
+   dark automaticamente aqui, sem tocar em componente nenhum. Cores de marca
+   (pri, primary, nav) e semânticas (grn, yel, red, rpa, n8n, both) ficam
+   intactas — já funcionam em fundo escuro. */
+.dark {
+  --color-bg: #0b1220;
+  --color-wh: #1e293b;
+  --color-bdr: #334155;
+  --color-txt: #f1f5f9;
+  --color-mut: #94a3b8;
+}
+
+/* Sem isso, o popup nativo do <select> (lista de opções) é sempre
+   desenhado pelo navegador com o chrome "claro" do SO — fundo branco fixo —
+   mesmo com .dark trocando --color-txt para quase-branco, resultando em
+   texto claro sobre fundo claro em todo dropdown/lista nativa (select,
+   scrollbar, checkbox). Declarar color-scheme avisa o navegador para
+   desenhar esses controles nativos no esquema certo por tema. */
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+/* color-scheme sozinho não é suficiente: no Windows o Chrome/Edge às vezes
+   desenha o popup do <select> com o chrome nativo do SO (fundo claro fixo),
+   ignorando o esquema da página — sobretudo quando o <select> nem declara
+   bg/text próprios (ex. TaskForm.tsx `inputCls`), caindo 100% no default do
+   navegador. Fixamos aqui pra todo select/option herdar o tema mesmo sem
+   classe própria; quem já define bg e text (StatusSelector, toolbar
+   `selectClass`) tem maior especificidade (seletor de classe > elemento) e
+   continua ganhando. */
+select {
+  background-color: var(--color-wh);
+  color: var(--color-txt);
+}
+
+select option {
+  background-color: var(--color-wh);
+  color: var(--color-txt);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-txt);
+  font-family: var(--font-poppins), 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+}
+
+/* Evita zoom automático no iOS quando o input tem font-size < 16px */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}

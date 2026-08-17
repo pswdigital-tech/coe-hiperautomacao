@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CoE — Oportunidades de Automação · Workshop I</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f4f8;--card:#fff;--pri:#2a5298;--pri2:#1e3a6e;--acc:#3b82f6;
+  --grn:#22c55e;--red:#ef4444;--ylw:#f59e0b;--pur:#8b5cf6;--cyn:#06b6d4;
+  --txt:#1e2a3a;--mut:#64748b;--bdr:#dde3ec;--shd:0 2px 12px rgba(0,0,0,.08);
+  --rad:10px;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);font-size:14px;min-height:100vh}
+
+/* ── TOP BAR ── */
+.topbar{background:linear-gradient(135deg,var(--pri2),var(--pri));color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.topbar h1{font-size:17px;font-weight:700;letter-spacing:.3px;flex:1}
+.topbar span{font-size:11px;opacity:.75;background:rgba(255,255,255,.15);padding:3px 10px;border-radius:20px}
+
+/* ── KPI BAR ── */
+.kpi-bar{display:flex;gap:10px;padding:14px 20px;background:#fff;border-bottom:1px solid var(--bdr);flex-wrap:wrap}
+.kpi{background:var(--bg);border-radius:8px;padding:8px 14px;text-align:center;min-width:80px}
+.kpi .kv{font-size:22px;font-weight:800;color:var(--pri)}
+.kpi .kl{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
+.kpi.green .kv{color:var(--grn)}
+.kpi.yellow .kv{color:var(--ylw)}
+.kpi.red .kv{color:var(--red)}
+.kpi.purple .kv{color:var(--pur)}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;gap:8px;padding:12px 20px;background:#fff;border-bottom:1px solid var(--bdr);flex-wrap:wrap;align-items:center}
+.toolbar input[type=text]{flex:1;min-width:180px;padding:7px 12px;border:1px solid var(--bdr);border-radius:7px;font-size:13px;background:var(--bg)}
+.toolbar select{padding:7px 10px;border:1px solid var(--bdr);border-radius:7px;font-size:12px;background:var(--bg);cursor:pointer}
+.tbtn{padding:7px 14px;border:none;border-radius:7px;font-size:12px;cursor:pointer;font-weight:600;transition:.15s}
+.tbtn.pri{background:var(--pri);color:#fff}.tbtn.pri:hover{background:var(--pri2)}
+.tbtn.sec{background:var(--bg);color:var(--txt);border:1px solid var(--bdr)}.tbtn.sec:hover{background:var(--bdr)}
+.tbtn.grn{background:var(--grn);color:#fff}
+.view-btns{display:flex;gap:4px;margin-left:auto}
+.vbtn{padding:6px 12px;border:1px solid var(--bdr);background:var(--bg);border-radius:6px;cursor:pointer;font-size:12px}
+.vbtn.active{background:var(--pri);color:#fff;border-color:var(--pri)}
+.rc{font-size:11px;color:var(--mut);white-space:nowrap}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;padding:0 20px 20px}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:var(--rad);overflow:hidden;box-shadow:var(--shd);margin-top:12px}
+thead{background:linear-gradient(135deg,var(--pri2),var(--pri));color:#fff}
+th{padding:11px 12px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{background:rgba(255,255,255,.1)}
+td{padding:10px 12px;border-bottom:1px solid var(--bdr);font-size:13px;vertical-align:middle}
+tr:hover td{background:#f8fafc;cursor:pointer}
+.sid{font-size:10px;font-weight:700;color:var(--pri);background:#e8f0fe;padding:2px 7px;border-radius:12px}
+.tn{font-weight:600;font-size:12px}
+.tc{font-size:11px;color:var(--mut)}
+.arr{font-size:10px;opacity:.5;margin-left:3px}
+.tempty{display:none;text-align:center;padding:40px;color:var(--mut);font-size:15px}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.b-rpa{background:#fef3c7;color:#92400e}
+.b-n8n{background:#dbeafe;color:#1e40af}
+.b-both{background:#ede9fe;color:#5b21b6}
+.b-cx-baixo{background:#dcfce7;color:#166534}
+.b-cx-medio{background:#fef9c3;color:#854d0e}
+.b-cx-alto{background:#fee2e2;color:#991b1b}
+
+/* status badges */
+.st-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.st-Novo{background:#f1f5f9;color:#475569}
+.st-Em-Análise{background:#dbeafe;color:#1e40af}
+.st-Planejamento{background:#e0e7ff;color:#3730a3}
+.st-Backlog{background:#fef3c7;color:#92400e}
+.st-Desenvolvimento{background:#fae8ff;color:#86198f}
+.st-Homologação{background:#ffedd5;color:#9a3412}
+.st-Produção{background:#dcfce7;color:#166534}
+.st-Concluído{background:#d1fae5;color:#065f46}
+
+/* score */
+.sc-chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;color:#fff}
+.sc-hi{background:#22c55e}.sc-md{background:#f59e0b}.sc-lo{background:#ef4444}
+
+/* fte */
+.fte-chip{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;background:#f0f9ff;color:#0369a1}
+
+/* ── CARDS ── */
+.cards-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;padding:12px 20px 24px}
+.card{background:#fff;border-radius:var(--rad);padding:16px;box-shadow:var(--shd);cursor:pointer;border:2px solid transparent;transition:.15s}
+.card:hover{border-color:var(--acc);transform:translateY(-2px)}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.card-proc{font-weight:700;font-size:13px;line-height:1.3;flex:1;padding-right:8px}
+.card-area{font-size:11px;color:var(--mut);margin-top:2px}
+.card-foot{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center}
+
+/* ── GESTÃO À VISTA ── */
+.kb-toolbar{display:flex;gap:8px;padding:10px 20px 0;align-items:center;flex-wrap:wrap;background:#fff;border-bottom:1px solid var(--bdr)}
+.kb-toolbar label{font-size:12px;color:var(--mut);display:flex;align-items:center;gap:5px;cursor:pointer}
+.kb-toolbar select{padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;font-size:12px;background:var(--bg);cursor:pointer}
+.kb-toolbar span{font-size:11px;color:var(--mut);margin-left:auto}
+.gestao-wrap{padding:14px 20px 24px;overflow-x:auto}
+.kanban{display:flex;gap:10px;min-width:max-content;align-items:flex-start}
+/* column */
+.kol{background:#fff;border-radius:10px;width:240px;flex-shrink:0;box-shadow:var(--shd);border:2px solid transparent;transition:border .15s,background .15s,transform .1s}
+.kol.drag-over{border:2px dashed var(--acc)!important;background:rgba(59,130,246,.04)!important}
+.kol.drag-over .kol-body{background:rgba(59,130,246,.04)}
+.kol-head{padding:10px 12px;border-radius:8px 8px 0 0;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;user-select:none}
+.kol-cnt{background:rgba(0,0,0,.15);color:inherit;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:700}
+.kol-fte{font-size:9px;opacity:.7;margin-top:1px}
+.kol-body{padding:6px;display:flex;flex-direction:column;gap:5px;min-height:100px;max-height:calc(100vh - 240px);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
+.kol-body::-webkit-scrollbar{width:4px}.kol-body::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:2px}
+.kol-empty{text-align:center;padding:18px 10px;font-size:11px;color:#94a3b8;border:2px dashed #e2e8f0;border-radius:8px;margin:4px;transition:.15s}
+.kol.drag-over .kol-empty{border-color:var(--acc);color:var(--acc);background:rgba(59,130,246,.04)}
+/* card */
+.kcard{background:var(--bg);border-radius:8px;padding:10px 10px 8px;cursor:grab;border-left:4px solid transparent;transition:all .15s;position:relative;user-select:none}
+.kcard:hover{background:#f0f6ff;box-shadow:0 3px 10px rgba(42,82,152,.12);transform:translateY(-1px)}
+.kcard.dragging{opacity:.3;transform:scale(.96) rotate(1deg)!important;cursor:grabbing}
+.kcard:active{cursor:grabbing}
+.kcard-handle{position:absolute;top:8px;right:8px;color:#cbd5e1;font-size:14px;line-height:1;letter-spacing:-2px;cursor:grab}
+.kcard-handle:hover{color:var(--mut)}
+.kcp{font-size:12px;font-weight:700;line-height:1.35;margin-bottom:3px;padding-right:16px;color:var(--txt)}
+.kca{font-size:10px;color:var(--mut);margin-bottom:5px}
+.kcf{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.kcid{font-size:9px;color:#94a3b8;margin-top:4px}
+.kcard-moved{font-size:9px;color:#10b981;margin-top:3px}
+
+/* ── MODAL ── */
+.mo-ov{display:none;position:fixed;inset:0;z-index:1000;overflow-y:auto;padding:20px}
+.mo-ov.open{display:flex;align-items:flex-start;justify-content:center}
+.mo-bg{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(3px)}
+.mo-box{position:relative;z-index:1;background:#fff;border-radius:14px;width:100%;max-width:780px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
+.mo-head{background:linear-gradient(135deg,var(--pri2),var(--pri));color:#fff;padding:20px 24px}
+.mo-av{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;margin-bottom:10px}
+.mo-nm{font-size:17px;font-weight:800;margin-bottom:3px}
+.mo-rl{font-size:12px;opacity:.8;margin-bottom:8px}
+.mo-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mo-ar{font-size:12px;opacity:.85}
+.mo-sc{display:flex;align-items:center;gap:8px;margin-left:auto}
+.sc-circle{width:52px;height:52px;border-radius:50%;border:3px solid;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.sc-circle .scn{font-size:18px;font-weight:800}
+.sc-circle .scl{font-size:8px;opacity:.7;text-transform:uppercase}
+.mo-hdr-btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
+.mhbtn{padding:6px 14px;border-radius:7px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.15);color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
+.mhbtn:hover{background:rgba(255,255,255,.3)}
+.mhbtn.save{background:var(--grn);border-color:var(--grn)}
+.mhbtn.danger{background:var(--red);border-color:var(--red)}
+select.mhbtn{font-size:12px;padding:5px 10px}
+.mo-body{padding:0}
+
+/* tabs */
+.tabs{display:flex;overflow-x:auto;border-bottom:1px solid var(--bdr);background:#f8fafc;padding:0 16px;gap:2px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab-btn{padding:10px 14px;border:none;background:none;cursor:pointer;font-size:12px;font-weight:600;color:var(--mut);border-bottom:3px solid transparent;white-space:nowrap;transition:.15s}
+.tab-btn:hover{color:var(--pri)}
+.tab-btn.active{color:var(--pri);border-bottom-color:var(--pri)}
+.tab-pan{display:none;padding:18px 20px;max-height:420px;overflow-y:auto}
+.tab-pan.active{display:block}
+
+/* tab content */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.info-item{background:var(--bg);border-radius:8px;padding:10px 14px}
+.info-item.full{grid-column:1/-1}
+.info-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);margin-bottom:3px}
+.info-val{font-size:13px;font-weight:600;color:var(--txt)}
+.tipo-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.tipo-tag{background:#e0e7ff;color:#3730a3;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600}
+
+/* criteria */
+.crit-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.crit-item{background:var(--bg);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
+.crit-lbl{font-size:12px;color:var(--txt);flex:1;padding-right:8px}
+.crit-val{font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;white-space:nowrap}
+.cv-sim{background:#dcfce7;color:#166534}
+.cv-nao{background:#fee2e2;color:#991b1b}
+.cv-parcial{background:#fef9c3;color:#854d0e}
+
+/* beneficios */
+.ben-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ben-item{background:var(--bg);border-radius:8px;padding:10px 14px}
+.ben-lbl{font-size:11px;color:var(--mut);margin-bottom:5px}
+.ben-bar-wrap{display:flex;align-items:center;gap:6px}
+.ben-bar{flex:1;height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden}
+.ben-fill{height:100%;border-radius:3px;background:var(--pri);transition:.3s}
+.ben-num{font-size:12px;font-weight:700;color:var(--pri);min-width:14px;text-align:right}
+.fte-box{background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #bae6fd;border-radius:10px;padding:14px 18px;text-align:center;margin-top:10px}
+.fte-box .fte-h{font-size:32px;font-weight:800;color:#0369a1}
+.fte-box .fte-l{font-size:11px;color:#0369a1;opacity:.7;margin-top:2px}
+.ben-list{margin-top:6px}
+.ben-list li{font-size:12px;color:var(--txt);padding:4px 0;border-bottom:1px solid var(--bdr);list-style:none;padding-left:14px;position:relative}
+.ben-list li::before{content:'→';position:absolute;left:0;color:var(--pri)}
+
+/* score tab */
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sc-row{background:var(--bg);border-radius:8px;padding:10px 14px}
+.sc-row.full{grid-column:1/-1;background:linear-gradient(135deg,var(--pri2),var(--pri));color:#fff;text-align:center;padding:14px}
+.sc-lbl{font-size:11px;color:var(--mut);margin-bottom:5px}
+.sc-row.full .sc-lbl{color:rgba(255,255,255,.7)}
+.sc-val-big{font-size:36px;font-weight:800}
+select.sc-sel{width:100%;padding:6px 8px;border:1px solid var(--bdr);border-radius:6px;font-size:12px;background:#fff;cursor:pointer}
+
+/* fases tab */
+.fases-grid{display:grid;gap:10px}
+.fase-item{background:var(--bg);border-radius:8px;padding:10px 14px;display:grid;grid-template-columns:1fr 130px 130px;gap:10px;align-items:center}
+.fase-lbl{font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
+.fase-input{font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;width:100%;background:#fff}
+.btn-save-fases{margin-top:8px;padding:8px 18px;background:var(--grn);color:#fff;border:none;border-radius:7px;font-weight:700;cursor:pointer;font-size:12px}
+.phase-status-row{background:var(--bg);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px}
+
+/* automacao tab */
+.auto-section{margin-bottom:14px}
+.auto-section h4{font-size:12px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;border-bottom:1px solid var(--bdr);padding-bottom:5px}
+.escopo-list{margin:0;padding:0;list-style:none}
+.escopo-list li{padding:6px 0;border-bottom:1px solid var(--bdr);font-size:13px;display:flex;gap:8px}
+.escopo-list li::before{content:'⚡';flex-shrink:0}
+
+/* risco */
+.risco-box{background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:16px}
+.risco-box h4{color:#c2410c;margin-bottom:8px;font-size:13px}
+
+/* edit mode */
+.edit-section{margin-bottom:14px}
+.edit-section h4{font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.edit-row{margin-bottom:8px}
+.edit-row label{display:block;font-size:11px;color:var(--mut);margin-bottom:3px}
+.edit-field{width:100%;padding:7px 10px;border:1px solid var(--bdr);border-radius:7px;font-size:13px;font-family:inherit;background:#f8fafc;color:var(--txt)}
+.edit-field:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(42,82,152,.12)}
+textarea.edit-field{resize:vertical}
+.edit-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.crit-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.crit-edit-item{background:var(--bg);border-radius:7px;padding:8px 10px}
+.crit-edit-item label{font-size:11px;color:var(--mut);display:block;margin-bottom:3px}
+
+/* form overlay */
+.fov-ov{display:none;position:fixed;inset:0;z-index:2000}
+.fov-ov.open{display:flex;align-items:center;justify-content:center}
+.fov-bg{position:absolute;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(3px)}
+.fov-box{position:relative;z-index:1;background:#fff;border-radius:14px;width:100%;max-width:620px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;max-height:90vh;display:flex;flex-direction:column}
+.fov-head{background:linear-gradient(135deg,var(--pri2),var(--pri));color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+.fov-head h3{font-size:15px;font-weight:700}
+.fov-steps{display:flex;gap:0;border-bottom:1px solid var(--bdr);background:#f8fafc;overflow-x:auto;padding:0 16px}
+.fstep{padding:8px 14px;font-size:11px;font-weight:600;color:var(--mut);border-bottom:3px solid transparent;white-space:nowrap}
+.fstep.active{color:var(--pri);border-bottom-color:var(--pri)}
+.fstep.done{color:var(--grn)}
+.fov-body{padding:18px 20px;overflow-y:auto;flex:1}
+.fov-foot{padding:12px 20px;border-top:1px solid var(--bdr);display:flex;justify-content:space-between;gap:8px}
+.ff label{display:block;font-size:11px;color:var(--mut);margin-bottom:3px;font-weight:600}
+.ff input,.ff select,.ff textarea{padding:8px 10px;border:1px solid var(--bdr);border-radius:7px;font-size:12px;font-family:inherit;background:#f8fafc;color:var(--txt);width:100%;transition:.15s}
+.ff input:focus,.ff select:focus,.ff textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(42,82,152,.12);background:#fff}
+.ff input.err,.ff select.err{border-color:var(--red)}
+.ff .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.ff .row.full{grid-template-columns:1fr}
+.ff .g{margin-bottom:12px}
+
+/* toast */
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;color:#fff;font-weight:700;font-size:13px;z-index:9999;opacity:0;transform:translateY(10px);transition:.3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+/* risk grid */
+.risk-grid-wrap{overflow-x:auto;margin-top:8px}
+.risk-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.risk-tbl th{background:var(--pri);color:#fff;padding:7px 9px;text-align:left;white-space:nowrap;font-weight:600}
+.risk-tbl td{padding:7px 9px;border-bottom:1px solid var(--bdr);vertical-align:middle}
+.risk-tbl tr:hover td{background:#f8fafc}
+.rp-critica{background:#fecaca;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.rp-alta{background:#fed7aa;color:#9a3412;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.rp-media{background:#fef9c3;color:#854d0e;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.rp-baixa{background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.rt-risco{background:#fee2e2;color:#991b1b;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600}
+.rt-imp{background:#ffedd5;color:#9a3412;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600}
+.rt-op{background:#dcfce7;color:#166534;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600}
+.risk-form{background:var(--bg);border-radius:10px;padding:14px;margin-top:10px;border:2px solid var(--acc)}
+.risk-form h5{font-size:12px;font-weight:700;color:var(--pri);margin-bottom:10px}
+.risk-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.risk-form-grid .full{grid-column:1/-1}
+.risk-form-grid label{font-size:10px;color:var(--mut);display:block;margin-bottom:2px;font-weight:600}
+.risk-form-grid input,.risk-form-grid select,.risk-form-grid textarea{width:100%;padding:6px 8px;border:1px solid var(--bdr);border-radius:6px;font-size:11px;font-family:inherit;background:#fff}
+/* relatório */
+.rel-section{background:#fff;border-radius:10px;padding:18px 20px;box-shadow:var(--shd);margin-bottom:16px}
+.rel-section h3{font-size:14px;font-weight:700;color:var(--pri);margin-bottom:14px;border-bottom:1px solid var(--bdr);padding-bottom:8px}
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.pie-wrap{background:#fff;border-radius:10px;padding:16px;box-shadow:var(--shd)}
+.pie-title{font-size:12px;font-weight:700;color:var(--pri);margin-bottom:10px;text-align:center}
+.pie-inner{display:flex;gap:12px;align-items:flex-start}
+.pie-legend{flex:1;min-width:0}
+.pie-leg-item{display:flex;align-items:center;gap:5px;margin-bottom:3px;font-size:10px}
+.pie-leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.pie-leg-lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pie-leg-val{font-weight:700;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>⚡ CoE — Oportunidades de Automação</h1>
+  <span id="fonte-badge">📋 Workshop I · Unidasul</span>
+</div>
+
+<div class="kpi-bar">
+  <div class="kpi"><div class="kv" id="ktot">0</div><div class="kl">Total</div></div>
+  <div class="kpi green"><div class="kv" id="kha">0</div><div class="kl">Alta (≥70)</div></div>
+  <div class="kpi yellow"><div class="kv" id="kme">0</div><div class="kl">Média (40-69)</div></div>
+  <div class="kpi red"><div class="kv" id="kba">0</div><div class="kl">Baixa (&lt;40)</div></div>
+  <div class="kpi"><div class="kv" id="kavg">0</div><div class="kl">Score Médio</div></div>
+  <div class="kpi purple"><div class="kv" id="kfte">0h</div><div class="kl">FTE Total/mês</div></div>
+  <div class="kpi"><div class="kv" id="k-novo">0</div><div class="kl">Novos</div></div>
+  <div class="kpi green"><div class="kv" id="k-prod">0</div><div class="kl">Produção</div></div>
+  <div class="kpi green"><div class="kv" id="k-done">0</div><div class="kl">Concluídos</div></div>
+</div>
+
+<div class="toolbar">
+  <input type="text" id="fs" placeholder="🔍 Buscar processo, área, responsável..." oninput="go()">
+  <select id="farea" onchange="go()"><option value="">Todas as Áreas</option></select>
+  <select id="ftool" onchange="go()"><option value="">Todas as Ferramentas</option></select>
+  <select id="fprio" onchange="go()">
+    <option value="">Todas as Prioridades</option>
+    <option value="alta">Alta (≥70)</option>
+    <option value="media">Média (40–69)</option>
+    <option value="baixa">Baixa (&lt;40)</option>
+  </select>
+  <select id="fstatus" onchange="go()">
+    <option value="">Todos os Status</option>
+    <option>Novo</option><option>Em Análise</option><option>Planejamento</option>
+    <option>Backlog</option><option>Desenvolvimento</option>
+    <option>Homologação</option><option>Produção</option><option>Concluído</option>
+  </select>
+  <select id="fsort" onchange="setSort()">
+    <option value="score_desc">🏆 Score: Maior primeiro</option>
+    <option value="score_asc">Score: Menor primeiro</option>
+    <option value="fte_desc">⏱️ FTE: Maior primeiro</option>
+    <option value="area_asc">Área A→Z</option>
+    <option value="processo_asc">Processo A→Z</option>
+    <option value="status_asc">Status</option>
+  </select>
+  <button class="tbtn sec" onclick="reset()">↺ Limpar</button>
+  <button class="tbtn grn" onclick="openForm()">➕ Nova Oportunidade</button>
+  <div class="view-btns">
+    <button class="vbtn active" id="vt" onclick="setView('table')">☰ Lista</button>
+    <button class="vbtn" id="vc" onclick="setView('cards')">⊞ Cards</button>
+    <button class="vbtn" id="vg" onclick="setView('gestao')">📊 Gestão</button>
+    <button class="vbtn" id="vr" onclick="setView('relatorio')">📈 Relatório</button>
+  </div>
+  <span class="rc" id="rc"></span>
+</div>
+
+<div id="view-table">
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th onclick="ts('seq_id')">#<span class="arr" id="ar-seq_id"></span></th>
+        <th>Solicitante</th>
+        <th onclick="ts('area')">Área<span class="arr" id="ar-area"></span></th>
+        <th onclick="ts('processo')">Processo<span class="arr" id="ar-processo"></span></th>
+        <th>Frequência</th>
+        <th>Pessoas</th>
+        <th>Complexidade</th>
+        <th>Ferramenta</th>
+        <th onclick="ts('status')">Status<span class="arr" id="ar-status"></span></th>
+        <th onclick="ts('fteHoras')">FTE/mês<span class="arr" id="ar-fteHoras"></span></th>
+        <th onclick="ts('score')">Score<span class="arr" id="ar-score"></span></th>
+        <th onclick="ts('score')">Prioridade<span class="arr"></span></th>
+        <th onclick="ts('rpaScore')">RPA Fit<span class="arr" id="ar-rpaScore"></span></th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="tempty" id="tempty">Nenhuma oportunidade encontrada.</div>
+  </div>
+</div>
+
+<div id="view-cards" style="display:none">
+  <div class="cards-wrap" id="cards-wrap"></div>
+</div>
+
+<div id="view-gestao" style="display:none">
+  <div class="kb-toolbar" id="kb-toolbar"></div>
+  <div class="gestao-wrap">
+    <div class="kanban" id="kanban"></div>
+  </div>
+</div>
+
+<div id="view-relatorio" style="display:none">
+  <div class="gestao-wrap" id="relatorio-wrap"></div>
+</div>
+
+<!-- MODAL -->
+<div class="mo-ov" id="modal">
+  <div class="mo-bg" onclick="closeMo()"></div>
+  <div class="mo-box">
+    <div class="mo-head">
+      <div style="display:flex;align-items:flex-start;gap:14px">
+        <div>
+          <div class="mo-av" id="m-av"></div>
+          <div class="mo-nm" id="m-nm"></div>
+          <div class="mo-rl" id="m-rl"></div>
+          <div class="mo-meta">
+            <span class="mo-ar" id="m-ar"></span>
+          </div>
+        </div>
+        <div class="mo-sc" style="margin-left:auto;flex-shrink:0">
+          <div class="sc-circle" id="m-sc-circle">
+            <div class="scn" id="m-sc-n">0</div>
+            <div class="scl">score</div>
+          </div>
+        </div>
+      </div>
+      <div class="mo-hdr-btns">
+        <select class="mhbtn" id="m-status-sel" onchange="quickChangeStatus(this.value)"></select>
+        <button class="mhbtn" id="btn-edit" onclick="toggleEdit()">✏️ Editar</button>
+        <button class="mhbtn save" id="btn-save" onclick="saveEdit()" style="display:none">💾 Salvar</button>
+        <button class="mhbtn danger" id="btn-cancel" onclick="cancelEdit()" style="display:none">✖ Cancelar</button>
+        <button class="mhbtn" onclick="closeMo()" style="margin-left:auto">✕ Fechar</button>
+      </div>
+    </div>
+    <div class="mo-body">
+      <div class="tabs" id="mo-tabs"></div>
+      <div id="mo-pans"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FORM OVERLAY -->
+<div class="fov-ov" id="fov">
+  <div class="fov-bg" onclick="closeForm()"></div>
+  <div class="fov-box">
+    <div class="fov-head">
+      <h3>➕ Nova Oportunidade</h3>
+      <button onclick="closeForm()" style="background:rgba(255,255,255,.2);border:none;color:#fff;cursor:pointer;font-size:16px;border-radius:6px;padding:2px 8px">✕</button>
+    </div>
+    <div class="fov-steps" id="fov-steps"></div>
+    <div class="fov-body ff" id="fov-body"></div>
+    <div class="fov-foot">
+      <button class="tbtn sec" onclick="formPrev()" id="btn-fprev">← Anterior</button>
+      <span style="font-size:11px;color:var(--mut);align-self:center" id="fstep-lbl"></span>
+      <button class="tbtn pri" onclick="formNext()" id="btn-fnext">Próximo →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DATA=[{"id": "WSI04", "seq_id": "0001", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Moises", "email": "Moisesabrahanmirandaleon@gmail.com", "area": "TI", "subarea": "Service Desk", "processo": "Ja automatize meus processos", "tipoProcesso": ["Tecnologia da Informação (TI)", "Atendimento", "Suporte e Apoio"], "frequencia": "Diário", "volumeMedio": "Acima de 20 Vezes", "tempoExecucao": "1 dia (Até 8 horas)", "numPessoas": "De 5 a 8 pessoas", "criterios": {"causaReclamacoes": "NÃO", "totalmenteManual": "PARCIAL", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 5, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 5}, "fteHoras": 1144.0, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "diario", "objetivo": 5, "fte": "muito_alto"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI19", "seq_id": "0002", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Rafaela Pohlmann", "email": "rafaela.silva@unidasul.com.br", "area": "Saude Ocupacional", "subarea": "SESMT", "processo": "Lançamento de ASO", "tipoProcesso": ["Saúde", "Operacional", "Recursos Humanos"], "frequencia": "Diário", "volumeMedio": "Acima de 20 Vezes", "tempoExecucao": "Recebo esse documento durante o dia todo, enquanto chego eu estou lançando", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "NÃO", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 5, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 5}, "fteHoras": 231.0, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "diario", "objetivo": 5, "fte": "muito_alto"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI09", "seq_id": "0003", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Bruna Rodrigues de Matos", "email": "bruna.rodrigues@unidasul.com.br", "area": "RH", "subarea": "Treinamento e Desenvolvimento", "processo": "Lançamento listas de treinamentos", "tipoProcesso": ["Recursos Humanos", "Operacional", "Arquivo"], "frequencia": "Diário", "volumeMedio": "Acima de 20 Vezes", "tempoExecucao": "1 Semana (Até 40 horas)", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "PARCIAL", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 3, "reducaoRetrabalho": 3, "compliance": 3, "objetivosEstrategicos": 3}, "fteHoras": 2640, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "diario", "objetivo": 4, "fte": "muito_alto"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI10", "seq_id": "0004", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Sheila Raupp Bauer", "email": "Sheila.bauer@unidasul.com.br", "area": "Controladoria", "subarea": "Fiscal", "processo": "Conciliação fiscal x contabilidade", "tipoProcesso": ["Fiscal", "Operacional", "Contablidade"], "frequencia": "Diário", "volumeMedio": "Acima de 20 Vezes", "tempoExecucao": "1 Quinzena (Até 80 horas)", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 3, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 5}, "fteHoras": 5280, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "diario", "objetivo": 4, "fte": "muito_alto"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI03", "seq_id": "0005", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Roberto", "email": "Roberto.rieth@unidasul.com.br", "area": "Departamento pessoal", "subarea": "Departamento pessoal", "processo": "Cálculo de Rescisões", "tipoProcesso": ["Recursos Humanos", "Operacional", "Financeiro"], "frequencia": "Diário", "volumeMedio": "Acima de 20 Vezes", "tempoExecucao": "De 3 a 4 horas", "numPessoas": "De 5 a 8 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 4, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 5}, "fteHoras": 500.5, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 5, "fte": "muito_alto"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI21", "seq_id": "0006", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Roberto", "email": "Roberto.rieth@unidasul.com.br", "area": "Saude Ocupacional", "subarea": "Saúde Ocupacional", "processo": "Informações ASOs", "tipoProcesso": ["Operacional", "Recursos Humanos", "Financeiro"], "frequencia": "Diário", "volumeMedio": "Acima de 20 Vezes", "tempoExecucao": "De 3 a 4 horas", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "PARCIAL", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "NÃO", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 5, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 5}, "fteHoras": 231.0, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 5, "fte": "muito_alto"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI38", "seq_id": "0007", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Cleonir", "email": "cleonir.lopes@unidasul.com.br", "area": "Controladoria", "subarea": "Fiscal", "processo": "Conferência Fiscal", "tipoProcesso": ["Operacional", "Contablidade", "Fiscal"], "frequencia": "Diário", "volumeMedio": "Acima de 20 Vezes", "tempoExecucao": "1 Quinzena (Até 80 horas)", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 5, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 5}, "fteHoras": 5280, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 5, "fte": "muito_alto"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI58", "seq_id": "0008", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Elisiane", "email": "elisiane.pedroso@unidasul.com.br", "area": "Financeiro", "subarea": "Contas  a Receber", "processo": "Avaliação de clientes - Serasa", "tipoProcesso": ["Operacional", "Financeiro", "Comercial / Vendas"], "frequencia": "Diário", "volumeMedio": "Acima de 20 Vezes", "tempoExecucao": "De 3 a 4 horas", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "NÃO", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 3, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 3, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 5}, "fteHoras": 231.0, "rpaScore": 4, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 5, "fte": "muito_alto"}, "ferramenta": "RPA + n8n", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI37", "seq_id": "0009", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Cleonir", "email": "cleonir.lopes@unidasul.com.br", "area": "Controladoria", "subarea": "Fiscal", "processo": "Apuração Prévia de ICMS", "tipoProcesso": ["Operacional", "Fiscal", "Contablidade"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 3 a 4 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "NÃO"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 3, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 5}, "fteHoras": 77.0, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "diario", "objetivo": 5, "fte": "medio"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI16", "seq_id": "0010", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Eduarda Rocha", "email": "eduarda.rocha@unidasul.com.br", "area": "Financeiro", "subarea": "Contas a Receber", "processo": "Avaliação de clientes - Serasa", "tipoProcesso": ["Financeiro", "Operacional", "Comercial / Vendas"], "frequencia": "Diário", "volumeMedio": "9 a 15 Vezes", "tempoExecucao": "De 3 a 4 horas", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "NÃO", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 3, "produtividade": 4, "qualidadeDados": 5, "reducaoCustos": 3, "reducaoRetrabalho": 2, "compliance": 3, "objetivosEstrategicos": 4}, "fteHoras": 231.0, "rpaScore": 4, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 4, "fte": "muito_alto"}, "ferramenta": "RPA + n8n", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI39", "seq_id": "0011", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Jefferson", "email": "jefferson.paulos@unidasul.com.br", "area": "Central de cadastros", "subarea": "Cadastro/Materiais", "processo": "Descrição de Materiais", "tipoProcesso": ["Operacional", "Cadastro", "Comercial / Vendas"], "frequencia": "Diário", "volumeMedio": "Acima de 20 Vezes", "tempoExecucao": "1 dia (Até 8 horas)", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 5, "reducaoCustos": 3, "reducaoRetrabalho": 5, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 528, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 4, "fte": "muito_alto"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI57", "seq_id": "0012", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Lislaine", "email": "lislaine.teresinha@unidasul.com.br", "area": "Financiro", "subarea": "Tesouraria", "processo": "Depósito numerário", "tipoProcesso": ["Operacional", "Financeiro", "Lojas"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 financeiro e todas as tesoureiras das lojas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 2, "reducaoRetrabalho": 5, "compliance": 2, "objetivosEstrategicos": 5}, "fteHoras": 264.0, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 4, "fte": "muito_alto"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI11", "seq_id": "0013", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Luana Bach", "email": "luana.deolinda@unidasul.com.br", "area": "Controladoria", "subarea": "Contabilidade", "processo": "Integração contábil sapiensxsap", "tipoProcesso": ["Contablidade", "Financeiro", "Fiscal"], "frequencia": "Diário", "volumeMedio": "4 a 8 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 3, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 3, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 5}, "fteHoras": 33.0, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "diario", "objetivo": 5, "fte": "baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI35", "seq_id": "0014", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Bruna Rodrigues de Matos", "email": "Bruna.rodrigues@unidasul.com.br", "area": "Segurança do Trabalho", "subarea": "Treinamento e Desenvolvimento", "processo": "Validação certificados de NRs", "tipoProcesso": ["Recursos Humanos", "Operacional", "Segurança do Trabalho"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 3, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 4, "reducaoRetrabalho": 3, "compliance": 3, "objetivosEstrategicos": 4}, "fteHoras": 99.0, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "diario", "objetivo": 4, "fte": "medio"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI44", "seq_id": "0015", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Cátia Silva", "email": "catia.silva@unidasul.com.br", "area": "Contabilidade", "subarea": "Movimento de Caixa", "processo": "Importação depósito recicladoras", "tipoProcesso": ["Operacional", "Contablidade", "Financeiro"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 3, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 5}, "fteHoras": 33.0, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "diario", "objetivo": 5, "fte": "baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI30", "seq_id": "0016", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Augusto Conrado souza", "email": "augusto.souza@unidasul.com.br", "area": "SESMT", "subarea": "Sesmt", "processo": "Cadastro de acidentes de trabalho", "tipoProcesso": ["Operacional", "Jurídico", "SESMT"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "Cada caso tem evolução, prazo correto deve ser todo processo finalizado em 24h, excessões pode exceder", "numPessoas": "Equipe SESMT, acidente, gestão da filial", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "NÃO", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 4, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 5}, "fteHoras": 4224, "rpaScore": 4, "prioridade": {"esforco": "alto", "complexidade": "alto", "tempo": "diario", "objetivo": 5, "fte": "muito_alto"}, "ferramenta": "RPA + n8n", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI32", "seq_id": "0017", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Roberto", "email": "Robertorieth@hotmail.com", "area": "DP", "subarea": "DP", "processo": "Admissão", "tipoProcesso": ["Operacional", "Recursos Humanos", "Financeiro"], "frequencia": "Diário", "volumeMedio": "Acima de 20 Vezes", "tempoExecucao": "De 3 a 4 horas", "numPessoas": "De 5 a 8 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "PARCIAL", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 5, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 5}, "fteHoras": 500.5, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "alto", "tempo": "diario", "objetivo": 5, "fte": "muito_alto"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI02", "seq_id": "0018", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Quélita Leal", "email": "quelita.leal@unidasul.com.br", "area": "Saúde", "subarea": "Pessoas e Cultura", "processo": "RAI( CAT)", "tipoProcesso": ["Operacional", "Recursos Humanos", "Atendimento"], "frequencia": "Diário", "volumeMedio": "9 a 15 Vezes", "tempoExecucao": "24 horas úteis", "numPessoas": "De 5 a 8 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "NÃO", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 3, "eliminacaoErros": 2, "produtividade": 3, "qualidadeDados": 4, "reducaoCustos": 3, "reducaoRetrabalho": 4, "compliance": 3, "objetivosEstrategicos": 4}, "fteHoras": 3432.0, "rpaScore": 4, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 3, "fte": "muito_alto"}, "ferramenta": "RPA + n8n", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI08", "seq_id": "0019", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Cleonir dos Santos Lopes", "email": "cleonir.lopes@unidasul.com.br", "area": "Controladoria", "subarea": "Fiscal", "processo": "Validação Matrix x Filial", "tipoProcesso": ["Operacional", "Compliance", "Fiscal"], "frequencia": "Semanal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "1 dia (Até 8 horas)", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 5, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 5}, "fteHoras": 103.2, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "semanal", "objetivo": 5, "fte": "alto"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI22", "seq_id": "0020", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Cleonir", "email": "cleonir.lopes@unidasul.com.br", "area": "Controladoria", "subarea": "Fiscal", "processo": "Relatórios de Conciliação", "tipoProcesso": ["Operacional", "Compliance", "Fiscal"], "frequencia": "Semanal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "12hrs", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 5, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 5}, "fteHoras": 154.8, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "semanal", "objetivo": 5, "fte": "alto"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI36", "seq_id": "0021", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Luana Bach", "email": "luana.deolinda@unidasul.com.br", "area": "Controladoria", "subarea": "Contabilidade", "processo": "Compensação automática de conciliação", "tipoProcesso": ["Operacional", "Contablidade", "Compliance"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 5, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 5}, "fteHoras": 99.0, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 5, "fte": "medio"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI27", "seq_id": "0022", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Bruna Rodrigues de Matos", "email": "Bruna.rodrigues@unidasul.com.br", "area": "Recursos Humanos", "subarea": "Treinamento e Desenvolvimento", "processo": "Agenda de treinamentos", "tipoProcesso": ["Recursos Humanos", "Operacional", "Treinamento"], "frequencia": "Semanal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 3 a 4 horas", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "PARCIAL", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 4, "produtividade": 5, "qualidadeDados": 4, "reducaoCustos": 3, "reducaoRetrabalho": 3, "compliance": 3, "objetivosEstrategicos": 3}, "fteHoras": 45.1, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "semanal", "objetivo": 4, "fte": "medio"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI48", "seq_id": "0023", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Bruna Rodrigues de Matos", "email": "Bruna.rodrigues@unidasul.com.br", "area": "RH", "subarea": "Treinamento", "processo": "Atualização de usuários na Smartleader", "tipoProcesso": ["Recursos Humanos", "Operacional", "Treinamento"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "PARCIAL", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 3, "produtividade": 3, "qualidadeDados": 5, "reducaoCustos": 2, "reducaoRetrabalho": 3, "compliance": 3, "objetivosEstrategicos": 4}, "fteHoras": 33.0, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "diario", "objetivo": 4, "fte": "baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI18", "seq_id": "0024", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Julio", "email": "Julio.goncalves@unidasul.com.br", "area": "SESMT", "subarea": "Segurança do Trabalho", "processo": "Inspeções- processo de Cipa", "tipoProcesso": ["Operacional", "Logística e Distribuição", "Inspeção"], "frequencia": "Diário", "volumeMedio": "9 a 15 Vezes", "tempoExecucao": "1 dia (Até 8 horas)", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 3, "qualidadeDados": 4, "reducaoCustos": 3, "reducaoRetrabalho": 4, "compliance": 3, "objetivosEstrategicos": 4}, "fteHoras": 528, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "alto", "tempo": "diario", "objetivo": 4, "fte": "muito_alto"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI25", "seq_id": "0025", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Jefferson", "email": "jefferson.paulos@unidasul.com.br", "area": "Central de cadastros", "subarea": "Cadastro", "processo": "Ajustes Dados basicos de cadastros de clientes e fornecedores", "tipoProcesso": ["Operacional", "Cadastro clientes", "Financeiro"], "frequencia": "Diário", "volumeMedio": "Acima de 20 Vezes", "tempoExecucao": "1 dia (Até 8 horas)", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "NÃO", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 3, "reducaoRetrabalho": 4, "compliance": 3, "objetivosEstrategicos": 4}, "fteHoras": 528, "rpaScore": 4, "prioridade": {"esforco": "alto", "complexidade": "alto", "tempo": "diario", "objetivo": 4, "fte": "muito_alto"}, "ferramenta": "RPA + n8n", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI31", "seq_id": "0026", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Cleonir", "email": "cleonir.lopes@unidasul.com.br", "area": "Controladoria", "subarea": "Fiscal", "processo": "Planilha de Fechamento", "tipoProcesso": ["Operacional", "Contablidade", "Fiscal"], "frequencia": "Semanal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "1 Quinzena (Até 80 horas)", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 5, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 5}, "fteHoras": 1032.0, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "alto", "tempo": "semanal", "objetivo": 5, "fte": "muito_alto"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI24", "seq_id": "0027", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Cátia Silva", "email": "catia.silva@unidasul.com.br", "area": "Contabilidade", "subarea": "Movimento de Caixa", "processo": "Conferência venda", "tipoProcesso": ["Contablidade", "Operacional", "Tecnologia da Informação (TI)"], "frequencia": "Diário", "volumeMedio": "Acima de 20 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "PARCIAL", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 3, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 99.0, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 4, "fte": "medio"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI26", "seq_id": "0028", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Janaína Leandro", "email": "Janaína.tamara@unidasul.com.br", "area": "Controladoria", "subarea": "Controle & gestão", "processo": "importação títulos verba", "tipoProcesso": ["Operacional", "Financeiro", "Contablidade"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 3, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 99.0, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 4, "fte": "medio"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI33", "seq_id": "0029", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Sheila Raupp Bauer", "email": "Sheila.bauer@unidasul.com.br", "area": "Contabilidade", "subarea": "Movimento de caixa", "processo": "Importação relatórios de recicladora", "tipoProcesso": ["Operacional", "Contablidade", "Financeiro"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 3 a 4 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 3, "produtividade": 5, "qualidadeDados": 4, "reducaoCustos": 3, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 5}, "fteHoras": 77.0, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 4, "fte": "medio"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI42", "seq_id": "0030", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Luana Bach", "email": "luana.deolinda@unidasul.com.br", "area": "Controladoria", "subarea": "Contabilidade", "processo": "Consulta de notas fiscais de energia e água", "tipoProcesso": ["Financeiro", "Contablidade", "Compliance"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 4, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 99.0, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 4, "fte": "medio"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI40", "seq_id": "0031", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Luana Bach", "email": "luana.deolinda@unidasul.com.br", "area": "Controladoria", "subarea": "Contabilidade", "processo": "Conferência das notas de issqn das nota emitidas para Unidasul", "tipoProcesso": ["Contablidade", "Financeiro", "Compliance"], "frequencia": "Semanal", "volumeMedio": "Acima de 20 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 4, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 19.3, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "semanal", "objetivo": 4, "fte": "baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI51", "seq_id": "0032", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Bruna Rodrigues de Matos", "email": "Bruna.Rodrigues@unidasul.com.br", "area": "RH", "subarea": "Treinamento e Desenvolvimento", "processo": "Tabulação avaliações de treinamento", "tipoProcesso": ["Recursos Humanos", "Operacional", "Treinamento"], "frequencia": "Semanal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "NÃO", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 3, "eliminacaoErros": 4, "produtividade": 3, "qualidadeDados": 5, "reducaoCustos": 3, "reducaoRetrabalho": 3, "compliance": 3, "objetivosEstrategicos": 4}, "fteHoras": 19.3, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "semanal", "objetivo": 4, "fte": "baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI60", "seq_id": "0033", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Elisiane Pedroso da Luz", "email": "elisiane.pedroso@unidasul.com.br", "area": "Financeiro", "subarea": "Contas a Receber", "processo": "Recarga - Cartão Convênio Pra TI", "tipoProcesso": ["Operacional", "Financeiro", "Contablidade"], "frequencia": "Semanal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 3, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 5}, "fteHoras": 6.4, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "semanal", "objetivo": 5, "fte": "muito_baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI23", "seq_id": "0034", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Luana simphronio de Mello", "email": "luana.mello@unidasul.com.br", "area": "Contas a pagar", "subarea": "Financeiro", "processo": "Encontro de contas de fornecedores  devoluções e verbas", "tipoProcesso": ["Financeiro", "Operacional", "Gestão de Processo"], "frequencia": "Diário", "volumeMedio": "Acima de 20 Vezes", "tempoExecucao": "1 dia (Até 8 horas)", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "NÃO", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 4, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 176, "rpaScore": 4, "prioridade": {"esforco": "alto", "complexidade": "alto", "tempo": "diario", "objetivo": 4, "fte": "alto"}, "ferramenta": "RPA + n8n", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI28", "seq_id": "0035", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Patricia Brehm Loreto", "email": "patricia.brehm@unidasul.com.br", "area": "Depto Pessoal", "subarea": "Depto Pessoal", "processo": "Admissão Rescisão Notas Fiscais  líquido bancários  contabilização importação de planilhas rateio", "tipoProcesso": ["Depto Pessoal", "Operacional", "Financeiro"], "frequencia": "Diário", "volumeMedio": "9 a 15 Vezes", "tempoExecucao": "1 dia (Até 8 horas)", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "PARCIAL", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 3, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 5, "reducaoRetrabalho": 5, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 176, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "alto", "tempo": "diario", "objetivo": 4, "fte": "alto"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI29", "seq_id": "0036", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Daniela", "email": "daniela.gallas@unidasul.com.br", "area": "Departamento pessoal", "subarea": "Departamento pessoal", "processo": "Admissão, rescisão, notas fiscais, líquido bancário, contabizacao, importação de planilha em Excel e CSV.", "tipoProcesso": ["Departamento pessoal", "Operacional", "Financeiro"], "frequencia": "Diário", "volumeMedio": "9 a 15 Vezes", "tempoExecucao": "1 dia (Até 8 horas)", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "PARCIAL", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 3, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 5, "reducaoRetrabalho": 5, "compliance": 4, "objetivosEstrategicos": 5}, "fteHoras": 176, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "alto", "tempo": "diario", "objetivo": 4, "fte": "alto"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI13", "seq_id": "0037", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Giselly", "email": "giselly.morcelli@unidasul.com.br", "area": "Pessoas e Cultura", "subarea": "Recrutamento e Seleção", "processo": "Indicadores BI de processos de Recrutamento e Seleção, Criação de Postos de trabalho, atualização de cargos/ tabelas salariais/ hierarquia e outros que ainda precisam ser mapeados", "tipoProcesso": ["Recursos Humanos", "Operacional", "Planejamento Estratégico"], "frequencia": "Semanal", "volumeMedio": "4 a 8 Vezes", "tempoExecucao": "De 3 a 4 horas", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "PARCIAL", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 5, "reducaoCustos": 4, "reducaoRetrabalho": 5, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 45.1, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "semanal", "objetivo": 4, "fte": "medio"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI14", "seq_id": "0038", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Bruno Martin", "email": "bruno.martins@unidasul.com.br", "area": "Controladoria", "subarea": "Patrimônio", "processo": "Transferências de centro de custo do ativo imobilizado", "tipoProcesso": ["Contablidade", "Gestão de Processo", "Planejamento Estratégico"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "PARCIAL", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 3, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 3, "reducaoRetrabalho": 3, "compliance": 3, "objetivosEstrategicos": 4}, "fteHoras": 33.0, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 4, "fte": "baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI54", "seq_id": "0039", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Lislaine", "email": "lislaine.teresinha@unidasul.com.br", "area": "Financeira", "subarea": "Tesouraria", "processo": "Boletos correspondente bancário", "tipoProcesso": ["Operacional", "Financeiro", "Contablidade"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 2, "reducaoRetrabalho": 5, "compliance": 2, "objetivosEstrategicos": 5}, "fteHoras": 33.0, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 4, "fte": "baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI56", "seq_id": "0040", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Elisiane", "email": "elisiane.pedroso@unidasul.com.br", "area": "Financeiro", "subarea": "Contas a Receber", "processo": "Bancos", "tipoProcesso": ["Operacional", "Financeiro", "Backoffice"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 3, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 3, "reducaoRetrabalho": 3, "compliance": 3, "objetivosEstrategicos": 5}, "fteHoras": 33.0, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 4, "fte": "baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI59", "seq_id": "0041", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Lislaine", "email": "lislaine.teresinha@unidasul.com.br", "area": "Financeiro", "subarea": "Tesouraria", "processo": "Depósito recicladoras", "tipoProcesso": ["Operacional", "Financeiro", "Contablidade"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 2, "reducaoRetrabalho": 5, "compliance": 2, "objetivosEstrategicos": 5}, "fteHoras": 33.0, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 4, "fte": "baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI62", "seq_id": "0042", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Lislaine", "email": "lislaine.teresinha@unidasul.com.br", "area": "Financeiro", "subarea": "Tesouraria", "processo": "Relatório fluxo de caixa diário", "tipoProcesso": ["Operacional", "Financeiro", "Planejamento Estratégico"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "NÃO", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 2, "reducaoRetrabalho": 5, "compliance": 2, "objetivosEstrategicos": 5}, "fteHoras": 33.0, "rpaScore": 4, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 4, "fte": "baixo"}, "ferramenta": "RPA + n8n", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI63", "seq_id": "0043", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Lislaine", "email": "lislaine.teresinha@unidasul.com.br", "area": "Financeiro", "subarea": "Tesouraria", "processo": "Relatório antecipações diárias", "tipoProcesso": ["Operacional", "Financeiro", "Suporte e Apoio"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "NÃO", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 2, "reducaoRetrabalho": 5, "compliance": 2, "objetivosEstrategicos": 5}, "fteHoras": 33.0, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 4, "fte": "baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI64", "seq_id": "0044", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Lislaine", "email": "lislaine.tesouraria@unidasul.com.br", "area": "Financeiro", "subarea": "Tesouraria", "processo": "Relatório imobilizado", "tipoProcesso": ["Operacional", "Financeiro", "Suporte e Apoio"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "NÃO", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "NÃO", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 2, "reducaoRetrabalho": 5, "compliance": 2, "objetivosEstrategicos": 5}, "fteHoras": 33.0, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 4, "fte": "baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI07", "seq_id": "0045", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Lislaine Teresinha Trocourt de Jesus", "email": "lislaine.teresinha@unidasul.com.br", "area": "Financeiro", "subarea": "Tesouraria", "processo": "Conciliação automática pix e-commerce", "tipoProcesso": ["Operacional", "Financeiro", "Contablidade"], "frequencia": "Semanal", "volumeMedio": "Acima de 20 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 4, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 6.4, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "semanal", "objetivo": 4, "fte": "muito_baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI41", "seq_id": "0046", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Luana Bach", "email": "luana.deolinda@unidasul.com.br", "area": "Controladoria", "subarea": "Contabilidade", "processo": "Conciliação transferências entre centros", "tipoProcesso": ["Contablidade", "Compliance", "Gestão de Processo"], "frequencia": "Semanal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 4, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 6.4, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "semanal", "objetivo": 4, "fte": "muito_baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI06", "seq_id": "0047", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Augusto Conrado souza", "email": "augusto.souza@unidasul.com.br", "area": "SESMT", "subarea": "Segurança do trabalho", "processo": "CIPA", "tipoProcesso": ["Segurança do trabalho", "Operacional", "Jurídico"], "frequencia": "Anual", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "Processo eleitoral cerca 60 dias", "numPessoas": "Cada filial precisa envolver pessoas no processo", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "NÃO"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 4, "qualidadeDados": 5, "reducaoCustos": 3, "reducaoRetrabalho": 5, "compliance": 5, "objetivosEstrategicos": 4}, "fteHoras": 307.2, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "anual", "objetivo": 5, "fte": "muito_alto"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI17", "seq_id": "0048", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Anageli", "email": "Anageli.haupt@unidasul.com.br", "area": "Financeiro", "subarea": "Contas a pagar", "processo": "Baixas de compensações", "tipoProcesso": ["Financeiro", "Operacional", "Contablidade"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 3 a 4 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "NÃO", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 4, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 77.0, "rpaScore": 4, "prioridade": {"esforco": "alto", "complexidade": "alto", "tempo": "diario", "objetivo": 4, "fte": "medio"}, "ferramenta": "RPA + n8n", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI15", "seq_id": "0049", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Elisiane Pedroso da Luz", "email": "Elisiane.pedroso@unidasul.com.br", "area": "Financeiro", "subarea": "Contas a receber", "processo": "Relatório Banco", "tipoProcesso": ["Financeiro", "Operacional", "Backoffice"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "NÃO", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 2, "reducaoRetrabalho": 3, "compliance": 2, "objetivosEstrategicos": 3}, "fteHoras": 33.0, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 3, "fte": "baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI53", "seq_id": "0050", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Lislaine", "email": "lislaine.teresinha@unidasul.com.br", "area": "Financeiro", "subarea": "Tesouraria", "processo": "Solicitação de troco", "tipoProcesso": ["Operacional", "Financeiro", "Gestão de Processo"], "frequencia": "Quinzenal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 3 a 4 horas", "numPessoas": "Totas as tesoureiras das lojas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 2, "reducaoRetrabalho": 5, "compliance": 2, "objetivosEstrategicos": 5}, "fteHoras": 56.0, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "quinzenal", "objetivo": 4, "fte": "medio"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI52", "seq_id": "0051", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Lislaine", "email": "lislaine.teresinha@unidasul.com.br", "area": "Financeiro", "subarea": "Tesouraria", "processo": "Fechamento Recarga Celular", "tipoProcesso": ["Financeiro", "Operacional", "Planejamento Estratégico"], "frequencia": "Mensal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 5, "reducaoRetrabalho": 5, "compliance": 3, "objetivosEstrategicos": 5}, "fteHoras": 1.5, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "mensal", "objetivo": 5, "fte": "muito_baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI05", "seq_id": "0052", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Janaína Leandro", "email": "Janaína.tamara@unidasul.com.br", "area": "Controladoria", "subarea": "Controle & Gestão", "processo": "Registro de Inventário", "tipoProcesso": ["Contablidade", "Operacional", "Tecnologia da Informação (TI)"], "frequencia": "Mensal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "1 dia (Até 8 horas)", "numPessoas": "Todas filiais com estoque", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "PARCIAL", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 4, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 64, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "mensal", "objetivo": 4, "fte": "medio"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI50", "seq_id": "0053", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Anageli", "email": "anageli.haupt@unidasul.com.br", "area": "Financeiro", "subarea": "Conta a pagar", "processo": "Identificação de Creditos de fornecedores", "tipoProcesso": ["Financeiro", "Operacional", "Comercial / Vendas"], "frequencia": "Diário", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 2, "produtividade": 5, "qualidadeDados": 1, "reducaoCustos": 1, "reducaoRetrabalho": 1, "compliance": 1, "objetivosEstrategicos": 3}, "fteHoras": 33.0, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "diario", "objetivo": 2, "fte": "baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI12", "seq_id": "0054", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Maria Salete Kunzler", "email": "maria.salete@unidasul.com.br", "area": "Sheila Raupp Bauer", "subarea": "Contabilidade", "processo": "Conciliação Vendas e Compras", "tipoProcesso": ["Contablidade", "Operacional", "Compliance"], "frequencia": "Mensal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "1 dia (Até 8 horas)", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 4, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 8, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "mensal", "objetivo": 4, "fte": "muito_baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI45", "seq_id": "0055", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Catia Silva", "email": "catia.silva@unidasul.com.br", "area": "Contabilidade", "subarea": "Movimento de Caixa", "processo": "Compensação de contas", "tipoProcesso": ["Contablidade", "Operacional", "Financeiro"], "frequencia": "Mensal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 4, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 1.5, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "mensal", "objetivo": 4, "fte": "muito_baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI47", "seq_id": "0056", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Catia Silva", "email": "catia.silva@unidasul.com.br", "area": "Contabilidade", "subarea": "Movimento de Caixa", "processo": "Conciliação Troco", "tipoProcesso": ["Operacional", "Financeiro", "Contablidade"], "frequencia": "Mensal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 4, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 1.5, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "baixo", "tempo": "mensal", "objetivo": 4, "fte": "muito_baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI01", "seq_id": "0057", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Ana Luisa Jacobs", "email": "Ana.luisa@unidasul.com.br", "area": "Financeiro", "subarea": "Tesouraria", "processo": "Conciliação Bancária", "tipoProcesso": ["Financeiro", "Operacional", "Gestão de Processo"], "frequencia": "Semanal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 3 a 4 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "NÃO", "totalmenteManual": "PARCIAL", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "NÃO", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 4, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 15.0, "rpaScore": 4, "prioridade": {"esforco": "medio", "complexidade": "medio", "tempo": "semanal", "objetivo": 4, "fte": "baixo"}, "ferramenta": "RPA + n8n", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI61", "seq_id": "0058", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Lislaine", "email": "lislaine.teresinha@unidasul.com.br", "area": "Financeiro", "subarea": "Tesouraria", "processo": "Relatório fluxo de caixa previsto", "tipoProcesso": ["Operacional", "Financeiro", "Planejamento Estratégico"], "frequencia": "Semanal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 3 a 4 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 2, "reducaoRetrabalho": 5, "compliance": 2, "objetivosEstrategicos": 5}, "fteHoras": 15.0, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "alto", "tempo": "semanal", "objetivo": 4, "fte": "baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI20", "seq_id": "0059", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Rudney Pâncaro Moscarelli Filho", "email": "rudney.filho@unidasul.com.br", "area": "Controladoria", "subarea": "Controle e Gestão", "processo": "Controladoria analítica", "tipoProcesso": ["Planejamento Estratégico", "Operacional", "Contablidade"], "frequencia": "Mensal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "NÃO", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 5, "reducaoCustos": 5, "reducaoRetrabalho": 5, "compliance": 3, "objetivosEstrategicos": 5}, "fteHoras": 4.5, "rpaScore": 4, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "mensal", "objetivo": 5, "fte": "muito_baixo"}, "ferramenta": "RPA + n8n", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI49", "seq_id": "0060", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Janaína Leandro", "email": "Janaína.tamara@hotmail.com", "area": "Controladoria", "subarea": "controle e gestão", "processo": "Metas compradores atacado e varejo", "tipoProcesso": ["Comercial / Vendas", "Contablidade", "Compras / Suprimento"], "frequencia": "Mensal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 3 a 4 horas", "numPessoas": "De 2 a 4 pessoas", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "SIM", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 4, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 10.5, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "mensal", "objetivo": 4, "fte": "baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI43", "seq_id": "0061", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Janaina Leandro", "email": "Janaina.tamara@unidasul.com.br", "area": "Controladoria", "subarea": "Controle & Gestão", "processo": "Faturamento mensal filiais para gestão aluguéis/envio locatário", "tipoProcesso": ["Operacional", "Contablidade", "Diretoria expansão"], "frequencia": "Mensal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 3 a 4 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "NÃO", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 4, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 3.5, "rpaScore": 5, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "mensal", "objetivo": 4, "fte": "muito_baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI46", "seq_id": "0062", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Catia Silva", "email": "catia.silva@unidasul.com.br", "area": "Contabilidade", "subarea": "Movimento de Caixa", "processo": "Conciliação depósito", "tipoProcesso": ["Operacional", "Financeiro", "Contablidade"], "frequencia": "Mensal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 4, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 1.5, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "mensal", "objetivo": 4, "fte": "muito_baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI55", "seq_id": "0063", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Lislaine", "email": "lislaine.teresinha@unidasul.com.br", "area": "Financeiro", "subarea": "Tesouraria", "processo": "Importação do extratos bancários", "tipoProcesso": ["Operacional", "Financeiro", "Contablidade"], "frequencia": "Mensal", "volumeMedio": "1 a 3 Vezes", "tempoExecucao": "De 1 a 2 horas", "numPessoas": "1 Pessoa", "criterios": {"causaReclamacoes": "NÃO", "totalmenteManual": "SIM", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "SIM", "validacaoDados": "SIM", "schedulable": "SIM", "temDocumentacao": "SIM"}, "beneficios": {"reducaoTempo": 5, "eliminacaoErros": 5, "produtividade": 5, "qualidadeDados": 2, "reducaoCustos": 2, "reducaoRetrabalho": 5, "compliance": 2, "objetivosEstrategicos": 5}, "fteHoras": 1.5, "rpaScore": 6, "prioridade": {"esforco": "alto", "complexidade": "medio", "tempo": "mensal", "objetivo": 4, "fte": "muito_baixo"}, "ferramenta": "RPA", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}, {"id": "WSI34", "seq_id": "0064", "tipo": "formulario", "fonte": "Workshop I", "solicitante": "Joel Pereira", "email": "joel.pereira@unidasul.com.br", "area": "Segurança do Trabalho", "subarea": "DP", "processo": "Criação de PGRs", "tipoProcesso": ["Operacional", "DP", "Recursos Humanos"], "frequencia": "Mensal", "volumeMedio": "Acima de 20 Vezes", "tempoExecucao": "1 dia (Até 8 horas)", "numPessoas": "2", "criterios": {"causaReclamacoes": "SIM", "totalmenteManual": "PARCIAL", "regrasClaras": "SIM", "decisaoHumana": "NÃO", "padronizacaoDocs": "NÃO", "validacaoDados": "NÃO", "schedulable": "NÃO", "temDocumentacao": "NÃO"}, "beneficios": {"reducaoTempo": 4, "eliminacaoErros": 4, "produtividade": 4, "qualidadeDados": 4, "reducaoCustos": 4, "reducaoRetrabalho": 4, "compliance": 4, "objetivosEstrategicos": 4}, "fteHoras": 16, "rpaScore": 3, "prioridade": {"esforco": "medio", "complexidade": "medio", "tempo": "mensal", "objetivo": 4, "fte": "baixo"}, "ferramenta": "RPA + n8n", "status": "Novo", "responsavel": "", "escopoAutomacao": [], "beneficiosEsperados": [], "riscos": [], "notas": "", "beneficioQualitativo": "", "fases": {"emAnalise": {"inicio": "", "fim": ""}, "planejamento": {"inicio": "", "fim": ""}, "backlog": {"inicio": "", "fim": ""}, "desenvolvimento": {"inicio": "", "fim": ""}, "homologacao": {"inicio": "", "fim": ""}, "producao": {"inicio": "", "fim": ""}, "concluido": {"inicio": "", "fim": ""}}}];
+
+const STATUS_ORDER=['Novo','Em Análise','Planejamento','Backlog','Desenvolvimento','Homologação','Produção','Concluído'];
+const STATUS_INFO={
+  'Novo':{icon:'🆕',col:'#94a3b8'},
+  'Em Análise':{icon:'🔍',col:'#3b82f6'},
+  'Planejamento':{icon:'📐',col:'#6366f1'},
+  'Backlog':{icon:'📦',col:'#f59e0b'},
+  'Desenvolvimento':{icon:'⚙️',col:'#a855f7'},
+  'Homologação':{icon:'🧪',col:'#f97316'},
+  'Produção':{icon:'🚀',col:'#22c55e'},
+  'Concluído':{icon:'✅',col:'#10b981'},
+};
+const PHASES_DEF=[
+  {key:'emAnalise',    label:'Em Análise',    icon:'🔍'},
+  {key:'planejamento', label:'Planejamento',   icon:'📐'},
+  {key:'backlog',      label:'Backlog',        icon:'📦'},
+  {key:'desenvolvimento',label:'Desenvolvimento',icon:'⚙️'},
+  {key:'homologacao',  label:'Homologação',    icon:'🧪'},
+  {key:'producao',     label:'Produção',       icon:'🚀'},
+  {key:'concluido',    label:'Concluído',      icon:'✅'},
+];
+const CRIT_LABELS={
+  causaReclamacoes:'Causa reclamações?',
+  totalmenteManual:'Totalmente manual?',
+  regrasClaras:'Regras claras e objetivas?',
+  decisaoHumana:'Necessita decisão humana?',
+  padronizacaoDocs:'Documentos padronizados?',
+  validacaoDados:'Tem validação de dados?',
+  schedulable:'Pode ser agendado?',
+  temDocumentacao:'Tem documentação?',
+};
+const BEN_LABELS={
+  reducaoTempo:'Redução de Tempo',
+  eliminacaoErros:'Eliminação de Erros',
+  produtividade:'Aumento de Produtividade',
+  qualidadeDados:'Melhoria da Qualidade de Dados',
+  reducaoCustos:'Redução de Custos',
+  reducaoRetrabalho:'Redução de Retrabalho',
+  compliance:'Compliance e Regulatório',
+  objetivosEstrategicos:'Objetivos Estratégicos',
+};
+
+// ── SCORE ─────────────────────────────────────────────────────────────────────
+function calcScore(p){
+  if(!p)return 0;
+  const ef={baixo:8,medio:14,alto:20};
+  const cx={baixo:20,medio:13,alto:6};
+  const tm={diario:20,semanal:16,quinzenal:12,mensal:8,anual:2};
+  const ob={1:4,2:8,3:12,4:16,5:20};
+  const ft={muito_baixo:4,baixo:8,medio:12,alto:16,muito_alto:20};
+  return (ef[p.esforco]||14)+(cx[p.complexidade]||13)+(tm[p.tempo]||16)+(ob[p.objetivo]||12)+(ft[p.fte]||12);
+}
+function scColor(s){return s>=70?'#22c55e':s>=40?'#f59e0b':'#ef4444';}
+function scChip(s){const cl=s>=70?'sc-hi':s>=40?'sc-md':'sc-lo';return `<span class="sc-chip ${cl}">${s}</span>`;}
+function fteChip(h){return `<span class="fte-chip">⏱️ ${h}h/mês</span>`;}
+function toolBadge(f){
+  if(!f)return '';
+  const m={RPA:'b-rpa','n8n':'b-n8n','RPA + n8n':'b-both','n8n + RPA':'b-both'};
+  return `<span class="badge ${m[f]||'b-n8n'}">${f}</span>`;
+}
+function cxBadge(cx){
+  const m={baixo:'b-cx-baixo',medio:'b-cx-medio',alto:'b-cx-alto'};
+  const l={baixo:'Baixa',medio:'Média',alto:'Alta'};
+  return `<span class="badge ${m[cx]||'b-cx-medio'}">${l[cx]||cx}</span>`;
+}
+function statusBadge(st){
+  const si=STATUS_INFO[st]||{icon:'',col:'#94a3b8'};
+  const cls='st-'+st.replace(/\s/g,'-').replace(/[^a-zA-Z0-9-]/g,'');
+  return `<span class="st-badge ${cls}">${si.icon} ${st}</span>`;
+}
+function critValBadge(v){
+  if(v==='SIM')return `<span class="crit-val cv-sim">✓ SIM</span>`;
+  if(v==='NÃO')return `<span class="crit-val cv-nao">✗ NÃO</span>`;
+  return `<span class="crit-val cv-parcial">~ PARCIAL</span>`;
+}
+function prioBadge(s){
+  if(s>=70)return '<span class="badge" style="background:#dcfce7;color:#166534">🔴 Alta</span>';
+  if(s>=40)return '<span class="badge" style="background:#fef9c3;color:#854d0e">🟡 Média</span>';
+  return '<span class="badge" style="background:#fee2e2;color:#991b1b">🔵 Baixa</span>';
+}
+function rpaBadge(d){
+  const rs=d.rpaScore||0;
+  if(rs>=5)return `<span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px">⭐ RPA Ideal (${rs}/6)</span>`;
+  if(rs>=3)return `<span class="badge" style="background:#e0e7ff;color:#3730a3;font-size:10px">✓ RPA+n8n (${rs}/6)</span>`;
+  return `<span class="badge" style="background:#f1f5f9;color:#64748b;font-size:10px">n8n (${rs}/6)</span>`;
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function initials(n){return (n||'?').split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();}
+
+// ── SORT / FILTER ─────────────────────────────────────────────────────────────
+let sortF='score',sortD=-1,cv='table';
+function setSort(){
+  const v=document.getElementById('fsort').value;
+  const m={score_desc:['score',-1],score_asc:['score',1],fte_desc:['fteHoras',-1],
+            area_asc:['area',1],processo_asc:['processo',1],status_asc:['status',1]};
+  [sortF,sortD]=m[v]||['score',-1];
+  syncArrows();go();
+}
+function syncArrows(){
+  ['seq_id','area','processo','status','fteHoras','score'].forEach(function(f){
+    const el=document.getElementById('ar-'+f);
+    if(el)el.textContent=sortF===f?(sortD<0?' ▼':' ▲'):'';
+  });
+}
+function ts(f){
+  if(sortF===f){sortD*=-1;}else{sortF=f;sortD=-1;}
+  syncArrows();go();
+}
+function refreshFilters(){
+  const faEl=document.getElementById('farea');const ca=faEl.value;
+  const areas=[...new Set(DATA.map(function(d){return (d.area||'').trim();}).filter(Boolean))].sort(function(a,b){return a.localeCompare(b,'pt');});
+  faEl.innerHTML='<option value="">Todas as Áreas</option>'+areas.map(function(a){return `<option value="${esc(a)}"${ca===a?' selected':''}>${esc(a)}</option>`;}). join('');
+  const ftEl=document.getElementById('ftool');const ct=ftEl.value;
+  const tools=[...new Set(DATA.map(function(d){return (d.ferramenta||'').trim();}).filter(Boolean))].sort();
+  ftEl.innerHTML='<option value="">Todas as Ferramentas</option>'+tools.map(function(t){return `<option value="${esc(t)}"${ct===t?' selected':''}>${esc(t)}</option>`;}). join('');
+}
+function getList(){
+  const s=document.getElementById('fs').value.toLowerCase();
+  const ar=document.getElementById('farea').value;
+  const tl=document.getElementById('ftool').value;
+  const pr=document.getElementById('fprio').value;
+  const st=document.getElementById('fstatus').value;
+  let list=DATA.filter(function(d){
+    const sc=calcScore(d.prioridade);
+    if(ar&&(d.area||'').trim()!==ar)return false;
+    if(tl&&d.ferramenta!==tl)return false;
+    if(pr==='alta'&&sc<70)return false;
+    if(pr==='media'&&(sc<40||sc>=70))return false;
+    if(pr==='baixa'&&sc>=40)return false;
+    if(st&&d.status!==st)return false;
+    if(s&&[d.solicitante,d.area,d.processo,d.subarea,d.seq_id,d.responsavel||''].join(' ').toLowerCase().indexOf(s)===-1)return false;
+    return true;
+  });
+  list.sort(function(a,b){
+    let av,bv;
+    if(sortF==='score'){av=calcScore(a.prioridade);bv=calcScore(b.prioridade);}
+    else if(sortF==='fteHoras'){av=a.fteHoras||0;bv=b.fteHoras||0;}
+    else if(sortF==='status'){av=STATUS_ORDER.indexOf(a.status);bv=STATUS_ORDER.indexOf(b.status);}
+    else{av=(a[sortF]||'').toString().toLowerCase();bv=(b[sortF]||'').toString().toLowerCase();}
+    return sortD*(av<bv?-1:av>bv?1:0);
+  });
+  return list;
+}
+function renderTable(list){
+  const tb=document.getElementById('tbody'),em=document.getElementById('tempty');
+  if(!list.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  tb.innerHTML=list.map(function(d){
+    const s=calcScore(d.prioridade);
+    return `<tr onclick="openMo('${d.id}')">
+      <td><span class="sid">#${d.seq_id}</span></td>
+      <td><div class="tn">${esc(d.solicitante)}</div><div class="tc">${esc(d.email)}</div></td>
+      <td><div class="tn" style="font-size:11px">${esc(d.area)}</div><div class="tc">${esc(d.subarea)}</div></td>
+      <td style="max-width:200px"><div class="tn" style="font-size:11px;white-space:normal;line-height:1.4">${esc(d.processo)}</div></td>
+      <td><span style="font-size:11px;color:var(--mut)">${esc(d.frequencia)}</span></td>
+      <td><span style="font-size:11px;color:var(--mut)">${esc(d.numPessoas)}</span></td>
+      <td>${cxBadge(d.prioridade.complexidade)}</td>
+      <td>${toolBadge(d.ferramenta)}</td>
+      <td>${statusBadge(d.status)}</td>
+      <td>${fteChip(d.fteHoras||0)}</td>
+      <td>${scChip(s)}</td>
+      <td>${prioBadge(s)}</td>
+      <td>${rpaBadge(d)}</td>
+    </tr>`;
+  }).join('');
+}
+function renderCards(list){
+  const w=document.getElementById('cards-wrap');
+  w.innerHTML=list.map(function(d){
+    const s=calcScore(d.prioridade);
+    return `<div class="card" onclick="openMo('${d.id}')">
+      <div class="card-head">
+        <div><div class="card-proc">${esc(d.processo)}</div><div class="card-area">🏢 ${esc(d.area)}</div></div>
+        ${scChip(s)}
+      </div>
+      <div style="font-size:11px;color:var(--mut)">${esc(d.solicitante)}</div>
+      <div class="card-foot">
+        ${toolBadge(d.ferramenta)}${statusBadge(d.status)}${fteChip(d.fteHoras||0)}
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderAreaChart(){
+  // agrupa por área
+  const areaMap={};
+  DATA.forEach(function(d){
+    const a=(d.area||'Sem Área').trim();
+    if(!areaMap[a])areaMap[a]={count:0,fte:0};
+    areaMap[a].count++;
+    areaMap[a].fte+=d.fteHoras||0;
+  });
+  const areas=Object.keys(areaMap).sort(function(a,b){return areaMap[b].count-areaMap[a].count;});
+  const maxCount=Math.max(...areas.map(function(a){return areaMap[a].count;}));
+  const maxFte=Math.max(...areas.map(function(a){return areaMap[a].fte;}));
+  const rows=areas.map(function(a){
+    const c=areaMap[a].count;
+    const f=Math.round(areaMap[a].fte);
+    const pctCount=c/maxCount*100;
+    const pctFte=f/maxFte*100;
+    return `<div style="display:grid;grid-template-columns:170px 1fr 70px 100px;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--bdr)">
+      <div style="font-size:11px;font-weight:600;text-align:right;padding-right:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(a)}">${esc(a)}</div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;align-items:center;gap:4px">
+          <div style="height:12px;width:${pctCount}%;background:#3b82f6;border-radius:3px;min-width:4px;transition:.4s"></div>
+          <span style="font-size:10px;font-weight:700;color:#3b82f6">${c} op.</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <div style="height:8px;width:${pctFte}%;background:#10b981;border-radius:3px;min-width:4px;transition:.4s"></div>
+          <span style="font-size:10px;color:#10b981">⏱️ ${f}h/mês</span>
+        </div>
+      </div>
+      <div style="text-align:center"><span style="background:#dbeafe;color:#1e40af;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">${c}</span></div>
+      <div style="text-align:center"><span style="background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700">${f}h</span></div>
+    </div>`;
+  }).join('');
+  return `<div style="background:#fff;border-radius:10px;padding:16px 20px;box-shadow:var(--shd);margin-bottom:16px">
+    <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--pri)">📊 Oportunidades por Área de Negócio</div>
+    <div style="display:grid;grid-template-columns:170px 1fr 70px 100px;gap:8px;padding:0 0 6px;border-bottom:2px solid var(--bdr);margin-bottom:4px">
+      <div style="font-size:10px;font-weight:700;color:var(--mut);text-align:right;padding-right:6px">ÁREA</div>
+      <div style="font-size:10px;font-weight:700;color:var(--mut)">DISTRIBUIÇÃO <span style="color:#3b82f6">■ Qtd Oportunidades</span> <span style="color:#10b981">■ FTE Estimado</span></div>
+      <div style="font-size:10px;font-weight:700;color:var(--mut);text-align:center">QTD</div>
+      <div style="font-size:10px;font-weight:700;color:var(--mut);text-align:center">FTE/MÊS</div>
+    </div>
+    ${rows}
+    <div style="margin-top:10px;display:flex;gap:16px;font-size:11px;color:var(--mut)">
+      <span>Total: <strong>${DATA.length}</strong> oportunidades</span>
+      <span>FTE Total: <strong>${Math.round(DATA.reduce(function(a,d){return a+(d.fteHoras||0);},0))}h/mês</strong></span>
+      <span>Áreas: <strong>${areas.length}</strong></span>
+    </div>
+  </div>`;
+}
+// ── DRAG STATE ────────────────────────────────────────────────────────────────
+let dragId=null;
+function statusToPhaseKey(st){
+  const map={'Em Análise':'emAnalise','Planejamento':'planejamento','Backlog':'backlog',
+    'Desenvolvimento':'desenvolvimento','Homologação':'homologacao',
+    'Produção':'producao','Concluído':'concluido'};
+  return map[st]||null;
+}
+
+function renderGestao(){
+  // ── toolbar ──
+  const kb=document.getElementById('kb-toolbar');
+  if(!kb._init){kb._filterArea='';kb._hideEmpty=false;kb._init=true;}
+  const areas=[...new Set(DATA.map(function(d){return (d.area||'').trim();}).filter(Boolean))].sort(function(a,b){return a.localeCompare(b,'pt');});
+  kb.innerHTML=`
+    <label><input type="checkbox" id="kb-hide-empty"${kb._hideEmpty?' checked':''}
+      onchange="kbToggleHide()"> Ocultar colunas vazias</label>
+    <select id="kb-area-filter" onchange="kbFilterArea()">
+      <option value="">Todas as Áreas</option>
+      ${areas.map(function(a){return `<option value="${esc(a)}"${kb._filterArea===a?' selected':''}>${esc(a)}</option>`;}). join('')}
+    </select>
+    <span id="kb-stats"></span>`;
+
+  const filterArea=kb._filterArea||'';
+  const hideEmpty=kb._hideEmpty||false;
+  const pool=filterArea?DATA.filter(function(d){return (d.area||'').trim()===filterArea;}):DATA;
+
+  const kanban=document.getElementById('kanban');
+  kanban.innerHTML=STATUS_ORDER.map(function(st){
+    const si=STATUS_INFO[st];
+    const cards=pool.filter(function(d){return d.status===st;})
+      .sort(function(a,b){return calcScore(b.prioridade)-calcScore(a.prioridade);});
+    if(hideEmpty&&!cards.length)return '';
+    const totalFte=Math.round(cards.reduce(function(a,d){return a+(d.fteHoras||0);},0));
+    const colId='kcol-'+st.replace(/[^a-z0-9]/gi,'-');
+    const cardHtml=cards.map(function(d){
+      const s=calcScore(d.prioridade);
+      const phKey=statusToPhaseKey(d.status);
+      const movedDate=phKey&&d.fases&&d.fases[phKey]&&d.fases[phKey].inicio?d.fases[phKey].inicio:'';
+      return `<div class="kcard" draggable="true"
+          ondragstart="kdragStart(event,'${d.id}')"
+          ondragend="kdragEnd(event)"
+          onclick="if(!window._wasDragging)openMo('${d.id}')"
+          style="border-left-color:${scColor(s)}">
+        <div class="kcard-handle">⋮⋮</div>
+        <div class="kcp">${esc(d.processo)}</div>
+        <div class="kca">🏢 ${esc(d.area)}</div>
+        <div class="kcf">
+          <span class="sid" style="font-size:9px">#${d.seq_id}</span>
+          ${scChip(s)}${fteChip(d.fteHoras||0)}${rpaBadge(d)}
+        </div>
+        ${movedDate?`<div class="kcard-moved">📅 Movido: ${movedDate}</div>`:''}
+        <div class="kcid" style="font-size:10px;color:var(--mut);margin-top:3px">${esc(d.solicitante)}</div>
+      </div>`;
+    }).join('');
+    return `<div class="kol" id="${colId}"
+        ondragover="kdragOver(event)"
+        ondragenter="kdragEnter(event,this)"
+        ondragleave="kdragLeave(event,this)"
+        ondrop="kdrop(event,'${st}')">
+      <div class="kol-head" style="background:${si.col}20;color:${si.col};border-bottom:3px solid ${si.col}">
+        <div>
+          <div>${si.icon} ${st}</div>
+          <div class="kol-fte">⏱️ ${totalFte}h FTE/mês</div>
+        </div>
+        <span class="kol-cnt">${cards.length}</span>
+      </div>
+      <div class="kol-body">
+        ${cardHtml||'<div class="kol-empty">📂 Arraste cards aqui</div>'}
+      </div>
+    </div>`;
+  }).join('');
+
+  const statsEl=document.getElementById('kb-stats');
+  if(statsEl){
+    const total=pool.length,fte=Math.round(pool.reduce(function(a,d){return a+(d.fteHoras||0);},0));
+    statsEl.textContent=total+' oportunidades · ⏱️ '+fte+'h FTE total';
+  }
+}
+function kbToggleHide(){
+  const kb=document.getElementById('kb-toolbar');
+  kb._hideEmpty=!!document.getElementById('kb-hide-empty')?.checked;
+  renderGestao();
+}
+function kbFilterArea(){
+  const kb=document.getElementById('kb-toolbar');
+  kb._filterArea=document.getElementById('kb-area-filter')?.value||'';
+  renderGestao();
+}
+
+// ── DRAG HANDLERS ─────────────────────────────────────────────────────────────
+function kdragStart(evt,id){
+  dragId=id;window._wasDragging=false;
+  evt.dataTransfer.effectAllowed='move';
+  evt.dataTransfer.setData('text/plain',id);
+  setTimeout(function(){const el=evt.target;if(el)el.classList.add('dragging');},0);
+}
+function kdragEnd(evt){
+  evt.target.classList.remove('dragging');
+  document.querySelectorAll('.kol.drag-over').forEach(function(c){c.classList.remove('drag-over');});
+  // small delay to prevent click from firing after drag
+  window._wasDragging=true;
+  setTimeout(function(){window._wasDragging=false;},200);
+}
+function kdragOver(evt){
+  evt.preventDefault();
+  evt.dataTransfer.dropEffect='move';
+}
+function kdragEnter(evt,col){
+  evt.preventDefault();
+  col.classList.add('drag-over');
+}
+function kdragLeave(evt,col){
+  if(!col.contains(evt.relatedTarget))col.classList.remove('drag-over');
+}
+function kdrop(evt,newStatus){
+  evt.preventDefault();
+  document.querySelectorAll('.kol.drag-over').forEach(function(c){c.classList.remove('drag-over');});
+  if(!dragId)return;
+  const d=DATA.find(function(x){return x.id===dragId;});
+  dragId=null;
+  if(!d||d.status===newStatus)return;
+  const today=new Date().toISOString().split('T')[0];
+  d.status=newStatus;
+  const phKey=statusToPhaseKey(newStatus);
+  if(phKey){
+    if(!d.fases)d.fases={};
+    if(!d.fases[phKey])d.fases[phKey]={inicio:'',fim:''};
+    if(!d.fases[phKey].inicio)d.fases[phKey].inicio=today;
+  }
+  renderGestao();
+  go();
+  showToast('📌 '+d.processo.slice(0,35)+' → '+newStatus,'#3b82f6');
+}
+function setView(v){
+  cv=v;
+  ['table','cards','gestao','relatorio'].forEach(function(x){
+    document.getElementById('view-'+x).style.display=x===v?'block':'none';
+    const b=document.getElementById('v'+x[0]);if(b)b.className='vbtn'+(x===v?' active':'');
+  });
+  if(v==='gestao')renderGestao();
+  else if(v==='relatorio')renderRelatorio();
+  else go();
+}
+
+// ── PALETTE & SVG HELPERS ─────────────────────────────────────────────────────
+const PALETTE=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#6366f1','#14b8a6','#e11d48','#0891b2','#65a30d','#d97706','#7c3aed','#0284c7','#dc2626'];
+function svgPie(slices,size){
+  const total=slices.reduce(function(a,s){return a+s.v;},0);
+  if(!total)return '<text x="50%" y="50%" text-anchor="middle" font-size="10" fill="#94a3b8">Sem dados</text>';
+  const cx=size/2,cy=size/2,R=size*0.4,ri=size*0.22;
+  let ang=-Math.PI/2;
+  return slices.map(function(s){
+    const a=s.v/total*2*Math.PI,sa=ang,ea=ang+a;ang=ea;
+    const x1=cx+R*Math.cos(sa),y1=cy+R*Math.sin(sa);
+    const x2=cx+R*Math.cos(ea),y2=cy+R*Math.sin(ea);
+    const ix1=cx+ri*Math.cos(sa),iy1=cy+ri*Math.sin(sa);
+    const ix2=cx+ri*Math.cos(ea),iy2=cy+ri*Math.sin(ea);
+    const lg=a>Math.PI?1:0;
+    return `<path d="M${ix1},${iy1}L${x1},${y1}A${R},${R} 0 ${lg},1 ${x2},${y2}L${ix2},${iy2}A${ri},${ri} 0 ${lg},0 ${ix1},${iy1}Z" fill="${s.c}" stroke="#fff" stroke-width="2"/>`;
+  }).join('');
+}
+function pieCard(slices,title,valFmt){
+  const size=160;
+  const total=slices.reduce(function(a,s){return a+s.v;},0);
+  const legend=slices.map(function(s){
+    return `<div class="pie-leg-item">
+      <div class="pie-leg-dot" style="background:${s.c}"></div>
+      <span class="pie-leg-lbl" title="${esc(s.l)}">${esc(s.l)}</span>
+      <span class="pie-leg-val" style="color:${s.c}">${valFmt(s.v)} (${Math.round(s.v/total*100)}%)</span>
+    </div>`;
+  }).join('');
+  return `<div class="pie-wrap">
+    <div class="pie-title">${title}</div>
+    <div class="pie-inner">
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="flex-shrink:0">${svgPie(slices,size)}</svg>
+      <div class="pie-legend">${legend}</div>
+    </div>
+  </div>`;
+}
+
+// ── RELATÓRIO ─────────────────────────────────────────────────────────────────
+function renderRelatorio(){
+  const areaMap={};
+  DATA.forEach(function(d){
+    const a=(d.area||'Sem Área').trim();
+    if(!areaMap[a])areaMap[a]={count:0,fte:0};
+    areaMap[a].count++;
+    areaMap[a].fte+=d.fteHoras||0;
+  });
+  const areas=Object.keys(areaMap).sort(function(a,b){return areaMap[b].count-areaMap[a].count;});
+  const maxC=Math.max(...areas.map(function(a){return areaMap[a].count;}));
+  const maxF=Math.max(...areas.map(function(a){return areaMap[a].fte;}));
+  const totalC=DATA.length, totalF=Math.round(DATA.reduce(function(a,d){return a+(d.fteHoras||0);},0));
+
+  // ── bar chart rows ──
+  const barRows=areas.map(function(a,i){
+    const c=areaMap[a].count,f=Math.round(areaMap[a].fte);
+    const col=PALETTE[i%PALETTE.length];
+    return `<div style="display:grid;grid-template-columns:160px 1fr 55px 90px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--bdr)">
+      <div style="font-size:11px;font-weight:600;text-align:right;padding-right:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(a)}">${esc(a)}</div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;align-items:center;gap:4px">
+          <div style="height:12px;width:${c/maxC*100}%;background:${col};border-radius:3px;min-width:4px"></div>
+          <span style="font-size:10px;font-weight:700;color:${col}">${c} op.</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <div style="height:8px;width:${f/maxF*100}%;background:#10b981;border-radius:3px;min-width:4px"></div>
+          <span style="font-size:10px;color:#10b981">⏱️ ${f}h</span>
+        </div>
+      </div>
+      <div style="text-align:center"><span style="background:#dbeafe;color:#1e40af;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">${c}</span></div>
+      <div style="text-align:center"><span style="background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700">${f}h</span></div>
+    </div>`;
+  }).join('');
+
+  // ── pie data ──
+  const pieCount=areas.map(function(a,i){return {l:a,v:areaMap[a].count,c:PALETTE[i%PALETTE.length]};  });
+  const pieFte=areas.map(function(a,i){return {l:a,v:Math.round(areaMap[a].fte),c:PALETTE[i%PALETTE.length]};  });
+
+  // ── summary cards ──
+  const summaryFerr={};DATA.forEach(function(d){summaryFerr[d.ferramenta]=(summaryFerr[d.ferramenta]||0)+1;});
+  const summaryPrio={Alta:0,Media:0,Baixa:0};
+  DATA.forEach(function(d){const s=calcScore(d.prioridade);if(s>=70)summaryPrio.Alta++;else if(s>=40)summaryPrio.Media++;else summaryPrio.Baixa++;});
+  const rpaCount=DATA.filter(function(d){return (d.rpaScore||0)>=5;}).length;
+  const rpaHybrid=DATA.filter(function(d){return (d.rpaScore||0)>=3&&(d.rpaScore||0)<5;}).length;
+
+  document.getElementById('relatorio-wrap').innerHTML=`
+  <div class="rel-section">
+    <h3>📊 Resumo do Portfólio — Workshop I</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px">
+      <div class="kpi"><div class="kv" style="color:var(--pri)">${totalC}</div><div class="kl">Total Oport.</div></div>
+      <div class="kpi purple"><div class="kv">${totalF}h</div><div class="kl">FTE Total/mês</div></div>
+      <div class="kpi green"><div class="kv">${summaryPrio.Alta}</div><div class="kl">Prioridade Alta</div></div>
+      <div class="kpi yellow"><div class="kv">${summaryPrio.Media}</div><div class="kl">Prioridade Média</div></div>
+      <div class="kpi"><div class="kv" style="color:#92400e">${rpaCount}</div><div class="kl">RPA Ideal</div></div>
+      <div class="kpi"><div class="kv" style="color:#3730a3">${rpaHybrid}</div><div class="kl">RPA + n8n</div></div>
+      <div class="kpi"><div class="kv" style="color:var(--pri)">${areas.length}</div><div class="kl">Áreas</div></div>
+    </div>
+  </div>
+  <div class="rel-section">
+    <h3>📊 Distribuição por Área de Negócio — Oportunidades & FTE Estimado</h3>
+    <div style="display:grid;grid-template-columns:160px 1fr 55px 90px;gap:8px;padding:0 0 6px;border-bottom:2px solid var(--bdr);margin-bottom:2px">
+      <div style="font-size:10px;font-weight:700;color:var(--mut);text-align:right;padding-right:8px">ÁREA</div>
+      <div style="font-size:10px;font-weight:700;color:var(--mut)">DISTRIBUIÇÃO <span style="color:#3b82f6">■ Oportunidades</span> <span style="color:#10b981">■ FTE</span></div>
+      <div style="font-size:10px;font-weight:700;color:var(--mut);text-align:center">QTD</div>
+      <div style="font-size:10px;font-weight:700;color:var(--mut);text-align:center">FTE/MÊS</div>
+    </div>
+    ${barRows}
+    <div style="margin-top:10px;font-size:11px;color:var(--mut);display:flex;gap:16px">
+      <span>Total: <strong>${totalC}</strong> oportunidades em <strong>${areas.length}</strong> áreas</span>
+      <span>FTE Total: <strong>${totalF}h/mês</strong></span>
+    </div>
+  </div>
+  <div class="charts-row">
+    ${pieCard(pieCount,'🔵 Oportunidades por Área',function(v){return v+' op.';})}
+    ${pieCard(pieFte,'⏱️ FTE Estimado por Área (h/mês)',function(v){return v+'h';})}
+  </div>`;
+}
+function go(){
+  refreshFilters();
+  const list=getList();
+  document.getElementById('rc').textContent=list.length+' de '+DATA.length+' oportunidades';
+  if(cv==='table')renderTable(list);
+  else if(cv==='cards')renderCards(list);
+  updateKPIs();
+}
+function reset(){
+  ['fs','farea','ftool','fprio','fstatus'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('fsort').value='score_desc';sortF='score';sortD=-1;syncArrows();go();
+}
+function updateKPIs(){
+  const sc=DATA.map(function(d){return calcScore(d.prioridade);});
+  const avg=sc.length?Math.round(sc.reduce(function(a,b){return a+b;},0)/sc.length):0;
+  const totalFte=DATA.reduce(function(a,d){return a+(d.fteHoras||0);},0);
+  document.getElementById('ktot').textContent=DATA.length;
+  document.getElementById('kavg').textContent=avg;
+  document.getElementById('kfte').textContent=Math.round(totalFte)+'h';
+  document.getElementById('kha').textContent=sc.filter(function(s){return s>=70;}).length;
+  document.getElementById('kme').textContent=sc.filter(function(s){return s>=40&&s<70;}).length;
+  document.getElementById('kba').textContent=sc.filter(function(s){return s<40;}).length;
+  document.getElementById('k-novo').textContent=DATA.filter(function(d){return d.status==='Novo';}).length;
+  document.getElementById('k-prod').textContent=DATA.filter(function(d){return d.status==='Produção';}).length;
+  document.getElementById('k-done').textContent=DATA.filter(function(d){return d.status==='Concluído';}).length;
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+let activeId=null,editMode=false,editBackup=null;
+const MODAL_TABS=[
+  {id:'tp-proc', label:'📋 Processo'},
+  {id:'tp-crit', label:'✅ Critérios'},
+  {id:'tp-auto', label:'🤖 Automação'},
+  {id:'tp-ben',  label:'📈 Benefícios'},
+  {id:'tp-sc',   label:'📊 Score'},
+  {id:'tp-fases',label:'📅 Fases'},
+  {id:'tp-risco',label:'⚠️ Risco'},
+  {id:'tp-obs',  label:'💬 Observação'},
+];
+function openMo(id){
+  activeId=id;editMode=false;
+  document.getElementById('btn-edit').style.display='';
+  document.getElementById('btn-save').style.display='none';
+  document.getElementById('btn-cancel').style.display='none';
+  const d=DATA.find(function(x){return x.id===id;});
+  const s=calcScore(d.prioridade),col=scColor(s);
+  document.getElementById('m-av').textContent=initials(d.solicitante);
+  document.getElementById('m-nm').textContent='#'+d.seq_id+' · '+d.solicitante;
+  document.getElementById('m-rl').textContent=d.processo;
+  document.getElementById('m-ar').textContent='🏢 '+d.area+(d.subarea&&d.subarea!==d.area?' · '+d.subarea:'');
+  document.getElementById('m-sc-n').textContent=s;
+  document.getElementById('m-sc-circle').style.borderColor=col+'99';
+  const mss=document.getElementById('m-status-sel');
+  if(mss){mss.innerHTML=STATUS_ORDER.map(function(st){return `<option value="${st}"${d.status===st?' selected':''}>${STATUS_INFO[st].icon} ${st}</option>`;}). join('');}
+  buildTabs(d);
+  document.getElementById('modal').classList.add('open');
+}
+function closeMo(){document.getElementById('modal').classList.remove('open');}
+function switchTab(tid){
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.tab===tid);});
+  document.querySelectorAll('.tab-pan').forEach(function(p){p.classList.toggle('active',p.id===tid);});
+}
+function buildTabs(d){
+  const tabsEl=document.getElementById('mo-tabs');
+  const pansEl=document.getElementById('mo-pans');
+  tabsEl.innerHTML=MODAL_TABS.map(function(t){
+    return `<button class="tab-btn" data-tab="${t.id}" onclick="switchTab('${t.id}')">${t.label}</button>`;
+  }).join('');
+  pansEl.innerHTML=MODAL_TABS.map(function(t){
+    return `<div class="tab-pan" id="${t.id}"></div>`;
+  }).join('');
+  tabsEl.querySelector('.tab-btn').classList.add('active');
+  pansEl.querySelector('.tab-pan').classList.add('active');
+  renderProcTab(d);
+  renderCritTab(d);
+  renderAutoTab(d);
+  renderBenTab(d);
+  renderScoreTab(d);
+  renderFasesTab(d);
+  renderRiscoTab(d);
+  renderObsTab(d);
+}
+function renderProcTab(d){
+  const el=document.getElementById('tp-proc');
+  const tipoTags=(d.tipoProcesso||[]).map(function(t){return `<span class="tipo-tag">${esc(t)}</span>`;}). join('');
+  el.innerHTML=`<div class="info-grid">
+    <div class="info-item full"><div class="info-lbl">Processo</div><div class="info-val">${esc(d.processo)}</div></div>
+    <div class="info-item"><div class="info-lbl">Área</div><div class="info-val">${esc(d.area)}</div></div>
+    <div class="info-item"><div class="info-lbl">Subárea / Time</div><div class="info-val">${esc(d.subarea)}</div></div>
+    <div class="info-item"><div class="info-lbl">Frequência</div><div class="info-val">${esc(d.frequencia)}</div></div>
+    <div class="info-item"><div class="info-lbl">Volume Médio</div><div class="info-val">${esc(d.volumeMedio)||'–'}</div></div>
+    <div class="info-item"><div class="info-lbl">Tempo de Execução</div><div class="info-val">${esc(d.tempoExecucao)||'–'}</div></div>
+    <div class="info-item"><div class="info-lbl">Nº de Pessoas</div><div class="info-val">${esc(d.numPessoas)||'–'}</div></div>
+    <div class="info-item"><div class="info-lbl">Complexidade</div><div class="info-val">${cxBadge(d.prioridade.complexidade)}</div></div>
+    <div class="info-item full"><div class="info-lbl">Tipo do Processo</div><div class="tipo-tags">${tipoTags||'–'}</div></div>
+    <div class="info-item"><div class="info-lbl">Solicitante</div><div class="info-val">${esc(d.solicitante)}</div></div>
+    <div class="info-item"><div class="info-lbl">E-mail</div><div class="info-val" style="font-size:12px">${esc(d.email)||'–'}</div></div>
+  </div>`;
+}
+function renderCritTab(d){
+  const el=document.getElementById('tp-crit');
+  const c=d.criterios||{};
+  const rows=Object.keys(CRIT_LABELS).map(function(k){
+    const inv=k==='decisaoHumana';
+    const v=c[k]||'NÃO';
+    const good=(inv?(v==='NÃO'):(v==='SIM'));
+    return `<div class="crit-item" style="border-left:3px solid ${good?'#22c55e':'#ef4444'}">
+      <span class="crit-lbl">${CRIT_LABELS[k]}</span>
+      ${critValBadge(v)}
+    </div>`;
+  }).join('');
+  const fav=Object.keys(CRIT_LABELS).filter(function(k){
+    const v=c[k]||'NÃO';
+    return k==='decisaoHumana'?v==='NÃO':v==='SIM';
+  }).length;
+  el.innerHTML=`<div style="margin-bottom:12px;background:var(--bg);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:13px;font-weight:700;color:var(--pri)">${fav}/8 critérios favoráveis à automação</span>
+    <div style="flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden">
+      <div style="height:100%;width:${fav/8*100}%;background:${fav>=6?'#22c55e':fav>=4?'#f59e0b':'#ef4444'};border-radius:4px"></div>
+    </div>
+  </div>
+  <div class="crit-grid">${rows}</div>`;
+}
+function renderAutoTab(d){
+  const el=document.getElementById('tp-auto');
+  const escopoItems=(d.escopoAutomacao||[]).map(function(e){return `<li>${esc(e)}</li>`;}).join('');
+  el.innerHTML=`<div class="auto-section">
+    <h4>Ferramenta Sugerida</h4>
+    <div style="display:flex;gap:8px;align-items:center">
+      ${toolBadge(d.ferramenta)}
+      <span style="font-size:12px;color:var(--mut)">${esc(d.ferramenta)}</span>
+    </div>
+  </div>
+  <div class="auto-section">
+    <h4>Status</h4>
+    ${statusBadge(d.status)}
+  </div>
+  <div class="auto-section">
+    <h4>Responsável</h4>
+    <div style="font-size:13px">${esc(d.responsavel)||'<span style="color:var(--mut)">Não atribuído</span>'}</div>
+  </div>
+  <div class="auto-section">
+    <h4>Escopo do Projeto</h4>
+    ${escopoItems?`<ul class="escopo-list">${escopoItems}</ul>`:'<span style="color:var(--mut);font-size:12px">Nenhum escopo definido ainda.</span>'}
+  </div>`;
+}
+function renderBenTab(d){
+  const el=document.getElementById('tp-ben');
+  const ben=d.beneficios||{};
+  const benRows=Object.keys(BEN_LABELS).map(function(k){
+    const v=ben[k]||1;
+    return `<div class="ben-item">
+      <div class="ben-lbl">${BEN_LABELS[k]}</div>
+      <div class="ben-bar-wrap">
+        <div class="ben-bar"><div class="ben-fill" style="width:${v/5*100}%;background:${v>=4?'#22c55e':v>=3?'#3b82f6':'#f59e0b'}"></div></div>
+        <div class="ben-num">${v}</div>
+      </div>
+    </div>`;
+  }).join('');
+  const benEspItems=(d.beneficiosEsperados||[]).map(function(b){return `<li>${esc(b)}</li>`;}).join('');
+  const avgBen=Object.keys(BEN_LABELS).length?Math.round(Object.values(d.beneficios||{}).reduce(function(a,v){return a+v;},0)/Object.keys(BEN_LABELS).length*10)/10:0;
+  const topBen=Object.keys(BEN_LABELS).sort(function(a,b){return ((d.beneficios||{})[b]||0)-((d.beneficios||{})[a]||0);}).slice(0,3).map(function(k){return BEN_LABELS[k];});
+  el.innerHTML=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+    <div class="fte-box" style="margin:0">
+      <div class="fte-h">${d.fteHoras||0}h</div>
+      <div class="fte-l">⏱️ FTE economizado por mês</div>
+    </div>
+    <div class="fte-box" style="margin:0;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-color:#c4b5fd">
+      <div class="fte-h" style="color:#5b21b6">${avgBen}</div>
+      <div class="fte-l" style="color:#5b21b6">📊 Score médio de benefícios (1–5)</div>
+    </div>
+  </div>
+  <div style="margin-bottom:12px">
+    <div style="font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📈 Avaliação Quantitativa dos Benefícios</div>
+    <div class="ben-grid">${benRows}</div>
+  </div>
+  <div style="margin-bottom:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px">
+    <div style="font-size:11px;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🏆 Top 3 Benefícios Identificados</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      ${topBen.map(function(b){return `<span style="background:#dcfce7;color:#166534;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600">${esc(b)}</span>`;}). join('')}
+    </div>
+  </div>
+  <div style="margin-bottom:12px">
+    <div style="font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">📝 Benefícios Esperados da Automação</div>
+    ${benEspItems
+      ?`<ul class="ben-list">${benEspItems}</ul>`
+      :'<div style="background:#f8fafc;border-radius:8px;padding:12px;font-size:12px;color:var(--mut);font-style:italic">Descreva os benefícios no modo de edição — ex: "Redução de 4h/semana no fechamento contábil", "Eliminação de erros nas conciliações".</div>'
+    }
+  </div>
+  <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 16px">
+    <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">💡 Benefício Qualitativo</div>
+    <div style="font-size:12px;color:#78350f;line-height:1.6">${d.beneficioQualitativo?esc(d.beneficioQualitativo):'<em style="color:var(--mut)">Adicione uma descrição qualitativa no modo de edição — ex: melhora na experiência do colaborador, ganho de confiabilidade nos dados.</em>'}</div>
+  </div>`;
+}
+function renderScoreTab(d){
+  const el=document.getElementById('tp-sc');
+  const p=d.prioridade||{};
+  const s=calcScore(p);
+  const efOpts=['baixo','medio','alto'].map(function(v){return `<option value="${v}"${p.esforco===v?' selected':''}>${v==='baixo'?'Baixa (8 pts)':v==='medio'?'Média (14 pts)':'Alta (20 pts)'}</option>`;}). join('');
+  const cxOpts=['baixo','medio','alto'].map(function(v){return `<option value="${v}"${p.complexidade===v?' selected':''}>${v==='baixo'?'Baixa (20 pts)':v==='medio'?'Média (13 pts)':'Alta (6 pts)'}</option>`;}). join('');
+  const tmOpts=[['diario','Diária (20 pts)'],['semanal','Semanal (16 pts)'],['quinzenal','Quinzenal (12 pts)'],['mensal','Mensal (8 pts)'],['anual','Anual (2 pts)']].map(function(x){return `<option value="${x[0]}"${p.tempo===x[0]?' selected':''}>${x[1]}</option>`;}). join('');
+  const obOpts=[1,2,3,4,5].map(function(v){return `<option value="${v}"${p.objetivo===v?' selected':''}>${v} - ${v===1?'Muito Baixo':v===2?'Baixo':v===3?'Médio':v===4?'Alto':'Muito Alto'}</option>`;}). join('');
+  const ftOpts=[['muito_baixo','Muito Baixo &lt;10h (4 pts)'],['baixo','Baixo 10-40h (8 pts)'],['medio','Médio 40-100h (12 pts)'],['alto','Alto 100-200h (16 pts)'],['muito_alto','Muito Alto &gt;200h (20 pts)']].map(function(x){return `<option value="${x[0]}"${p.fte===x[0]?' selected':''}>${x[1]}</option>`;}). join('');
+  el.innerHTML=`<div class="score-grid">
+    <div class="sc-row full"><div class="sc-lbl">Score Total (máx 100)</div><div class="sc-val-big" id="sc-total">${s}</div></div>
+    <div class="sc-row"><div class="sc-lbl">Esforço / Viabilidade (20 pts)</div><select class="sc-sel" id="m-ef" onchange="recalc()">${efOpts}</select></div>
+    <div class="sc-row"><div class="sc-lbl">Complexidade (20 pts)</div><select class="sc-sel" id="m-cx" onchange="recalc()">${cxOpts}</select></div>
+    <div class="sc-row"><div class="sc-lbl">Frequência / Retorno (20 pts)</div><select class="sc-sel" id="m-tm" onchange="recalc()">${tmOpts}</select></div>
+    <div class="sc-row"><div class="sc-lbl">Alinhamento Estratégico (20 pts)</div><select class="sc-sel" id="m-ob" onchange="recalc()">${obOpts}</select></div>
+    <div class="sc-row full"><div class="sc-lbl">FTE — Impacto em Horas (20 pts)</div><select class="sc-sel" id="m-ft" onchange="recalc()">${ftOpts}</select></div>
+  </div>`;
+}
+function recalc(){
+  const efEl=document.getElementById('m-ef');
+  const cxEl=document.getElementById('m-cx');
+  const tmEl=document.getElementById('m-tm');
+  const obEl=document.getElementById('m-ob');
+  const ftEl=document.getElementById('m-ft');
+  if(!efEl)return;
+  const p={esforco:efEl.value,complexidade:cxEl.value,tempo:tmEl.value,objetivo:parseInt(obEl.value)||3,fte:ftEl.value};
+  const s=calcScore(p);
+  const stEl=document.getElementById('sc-total');
+  if(stEl){stEl.textContent=s;stEl.style.color=scColor(s);}
+  const scN=document.getElementById('m-sc-n');if(scN)scN.textContent=s;
+  const scC=document.getElementById('m-sc-circle');if(scC)scC.style.borderColor=scColor(s)+'99';
+  go();
+}
+function renderFasesTab(d){
+  const el=document.getElementById('tp-fases');
+  const stOpts=STATUS_ORDER.map(function(st){return `<option value="${st}"${d.status===st?' selected':''}>${STATUS_INFO[st].icon} ${st}</option>`;}). join('');
+  const rows=PHASES_DEF.map(function(ph){
+    const f=(d.fases||{})[ph.key]||{inicio:'',fim:''};
+    return `<div class="fase-item">
+      <div class="fase-lbl">${ph.icon} ${ph.label}</div>
+      <input type="date" class="fase-input" id="fase-${ph.key}-ini" value="${f.inicio}" placeholder="Início">
+      <input type="date" class="fase-input" id="fase-${ph.key}-fim" value="${f.fim}" placeholder="Fim">
+    </div>`;
+  }).join('');
+  el.innerHTML=`<div class="phase-status-row">
+    <span style="font-size:12px;font-weight:600">Status atual:</span>
+    <select id="phase-status-sel" class="edit-field" style="width:auto" onchange="quickChangeStatus(this.value)">${stOpts}</select>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 130px 130px;gap:6px;padding:0 0 6px;font-size:10px;font-weight:700;color:var(--mut);text-transform:uppercase">
+    <span>Fase</span><span>Início</span><span>Fim</span>
+  </div>
+  <div class="fases-grid">${rows}</div>
+  <button class="btn-save-fases" onclick="savePhaseDates()">💾 Salvar Datas</button>`;
+}
+// ── RISK HELPERS ──────────────────────────────────────────────────────────────
+const RISK_PRIO_MATRIX={
+  'Alto':        {'Provável':'Crítica','Possível':'Crítica','Improvável':'Alta','Remota':'Alta'},
+  'Significativo':{'Provável':'Crítica','Possível':'Alta','Improvável':'Média','Remota':'Média'},
+  'Moderado':    {'Provável':'Alta','Possível':'Média','Improvável':'Média','Remota':'Baixa'},
+  'Baixo':       {'Provável':'Alta','Possível':'Média','Improvável':'Baixa','Remota':'Baixa'},
+};
+function calcRiskPrio(imp,prob){return((RISK_PRIO_MATRIX[imp]||{})[prob])||'–';}
+function riskPrioBadge(p){
+  const m={'Crítica':'rp-critica','Alta':'rp-alta','Média':'rp-media','Baixa':'rp-baixa'};
+  return `<span class="${m[p]||'rp-baixa'}">${p||'–'}</span>`;
+}
+function riskTypeBadge(t){
+  if(t==='Impedimento')return `<span class="rt-imp">🚧 ${t}</span>`;
+  if(t==='Oportunidade')return `<span class="rt-op">💡 ${t}</span>`;
+  return `<span class="rt-risco">⚠️ ${t}</span>`;
+}
+let riskEditIdx=-1; // -1=new, >=0=editing index
+function renderRiscoTab(d){
+  const el=document.getElementById('tp-risco');
+  const riscos=d.riscos||[];
+  const rows=riscos.length?riscos.map(function(r,i){
+    return `<tr>
+      <td style="font-weight:700;color:var(--pri)">R${String(i+1).padStart(3,'0')}</td>
+      <td style="max-width:160px;white-space:normal">${esc(r.descricao)}</td>
+      <td>${riskTypeBadge(r.tipo)}</td>
+      <td><span style="font-size:10px;background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:10px">${esc(r.responsavel)}</span></td>
+      <td style="font-size:11px">${esc(r.impacto)}</td>
+      <td style="font-size:11px">${esc(r.probabilidade)}</td>
+      <td>${riskPrioBadge(r.prioridade)}</td>
+      <td><span style="font-size:10px;color:var(--mut)">${esc(r.status)}</span></td>
+      <td style="white-space:nowrap">
+        <button onclick="openRiskForm(${i})" style="background:#dbeafe;color:#1e40af;border:none;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:10px;margin-right:3px">✏️</button>
+        <button onclick="deleteRisk(${i})" style="background:#fee2e2;color:#991b1b;border:none;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:10px">🗑️</button>
+      </td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="9" style="text-align:center;color:var(--mut);padding:14px;font-size:12px">Nenhum risco registrado</td></tr>';
+
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <span style="font-size:12px;font-weight:700;color:var(--pri)">⚠️ Registro de Riscos — ${riscos.length} registro(s)</span>
+    <button onclick="openRiskForm(-1)" style="background:var(--pri);color:#fff;border:none;border-radius:7px;padding:6px 12px;cursor:pointer;font-size:11px;font-weight:700">+ Adicionar Risco</button>
+  </div>
+  <div class="risk-grid-wrap">
+    <table class="risk-tbl">
+      <thead><tr>
+        <th>ID</th><th>Descrição</th><th>Tipo</th><th>Responsável</th>
+        <th>Impacto</th><th>Probabilidade</th><th>Prioridade</th><th>Status</th><th>Ações</th>
+      </tr></thead>
+      <tbody id="risk-tbody">${rows}</tbody>
+    </table>
+  </div>
+  <div id="risk-form-area"></div>`;
+}
+function openRiskForm(idx){
+  riskEditIdx=idx;
+  const d=DATA.find(function(x){return x.id===activeId;});
+  const r=idx>=0?(d.riscos||[])[idx]:{descricao:'',tipo:'Risco',responsavel:'UnidaSul',impacto:'Moderado',probabilidade:'Possível',status:'Risco Novo',respostaRisco:'',descricaoImpacto:''};
+  const tipoOpts=['Impedimento','Risco','Oportunidade'].map(function(t){return `<option${r.tipo===t?' selected':''}>${t}</option>`;}).join('');
+  const respOpts=['PSW','UnidaSul'].map(function(t){return `<option${r.responsavel===t?' selected':''}>${t}</option>`;}).join('');
+  const impOpts=['Baixo','Moderado','Significativo','Alto'].map(function(t){return `<option${r.impacto===t?' selected':''}>${t}</option>`;}).join('');
+  const probOpts=['Remota','Improvável','Possível','Provável'].map(function(t){return `<option${r.probabilidade===t?' selected':''}>${t}</option>`;}).join('');
+  const stOpts=['Risco Novo','Risco Gerenciado','Risco Mitigado','Risco Ocorrido'].map(function(t){return `<option${r.status===t?' selected':''}>${t}</option>`;}).join('');
+  const prioCalc=calcRiskPrio(r.impacto,r.probabilidade);
+  document.getElementById('risk-form-area').innerHTML=`<div class="risk-form">
+    <h5>${idx>=0?'✏️ Editar Risco R'+String(idx+1).padStart(3,'0'):'➕ Novo Risco'}</h5>
+    <div class="risk-form-grid">
+      <div class="full"><label>Descrição do Risco *</label><input id="rf-desc" value="${esc(r.descricao)}" placeholder="Descreva o risco..."></div>
+      <div><label>Tipo de Risco</label><select id="rf-tipo">${tipoOpts}</select></div>
+      <div><label>Responsável</label><select id="rf-resp">${respOpts}</select></div>
+      <div><label>Impacto</label><select id="rf-imp" onchange="updateRiskPrioPreview()">${impOpts}</select></div>
+      <div><label>Probabilidade</label><select id="rf-prob" onchange="updateRiskPrioPreview()">${probOpts}</select></div>
+      <div><label>Prioridade (auto)</label><div id="rf-prio-preview" style="padding:6px 0">${riskPrioBadge(prioCalc)}</div></div>
+      <div><label>Status do Risco</label><select id="rf-status">${stOpts}</select></div>
+      <div class="full"><label>Resposta ao Risco (ação)</label><textarea id="rf-resposta" rows="2" style="resize:vertical">${esc(r.respostaRisco)}</textarea></div>
+      <div class="full"><label>Descrição do Impacto</label><textarea id="rf-impDesc" rows="2" style="resize:vertical">${esc(r.descricaoImpacto)}</textarea></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button onclick="saveRisk()" style="background:var(--grn);color:#fff;border:none;border-radius:7px;padding:7px 16px;cursor:pointer;font-weight:700;font-size:12px">💾 Salvar</button>
+      <button onclick="cancelRiskForm()" style="background:var(--bg);border:1px solid var(--bdr);border-radius:7px;padding:7px 16px;cursor:pointer;font-size:12px">✖ Cancelar</button>
+    </div>
+  </div>`;
+}
+function updateRiskPrioPreview(){
+  const imp=document.getElementById('rf-imp')?.value;
+  const prob=document.getElementById('rf-prob')?.value;
+  const prev=document.getElementById('rf-prio-preview');
+  if(prev&&imp&&prob)prev.innerHTML=riskPrioBadge(calcRiskPrio(imp,prob));
+}
+function saveRisk(){
+  const desc=document.getElementById('rf-desc')?.value?.trim();
+  if(!desc){showToast('Informe a descrição do risco','#ef4444');return;}
+  const d=DATA.find(function(x){return x.id===activeId;});
+  if(!d.riscos)d.riscos=[];
+  const imp=document.getElementById('rf-imp').value;
+  const prob=document.getElementById('rf-prob').value;
+  const risco={
+    descricao:desc,
+    tipo:document.getElementById('rf-tipo').value,
+    responsavel:document.getElementById('rf-resp').value,
+    impacto:imp,
+    probabilidade:prob,
+    prioridade:calcRiskPrio(imp,prob),
+    status:document.getElementById('rf-status').value,
+    respostaRisco:document.getElementById('rf-resposta').value,
+    descricaoImpacto:document.getElementById('rf-impDesc').value,
+  };
+  if(riskEditIdx>=0){d.riscos[riskEditIdx]=risco;}else{d.riscos.push(risco);}
+  renderRiscoTab(d);
+  showToast('✅ Risco salvo!','#22c55e');
+}
+function deleteRisk(idx){
+  const d=DATA.find(function(x){return x.id===activeId;});
+  if(!d.riscos)return;
+  d.riscos.splice(idx,1);
+  renderRiscoTab(d);
+  showToast('Risco removido','#f59e0b');
+}
+function cancelRiskForm(){
+  document.getElementById('risk-form-area').innerHTML='';
+}
+function renderObsTab(d){
+  const el=document.getElementById('tp-obs');
+  el.innerHTML=`<div class="info-item" style="background:var(--bg);border-radius:8px;padding:14px">
+    <div class="info-lbl">Observações / Notas</div>
+    <div style="font-size:13px;line-height:1.7;margin-top:6px;white-space:pre-wrap">${esc(d.notas)||'<span style="color:var(--mut)">Sem observações.</span>'}</div>
+  </div>`;
+}
+
+// ── QUICK STATUS / SAVE DATES ──────────────────────────────────────────────────
+function quickChangeStatus(newStatus){
+  if(!activeId)return;
+  const d=DATA.find(function(x){return x.id===activeId;});
+  if(!d)return;
+  d.status=newStatus;
+  const mss=document.getElementById('m-status-sel');if(mss)mss.value=newStatus;
+  const pss=document.getElementById('phase-status-sel');if(pss)pss.value=newStatus;
+  go();if(cv==='gestao')renderGestao();
+  showToast('Status atualizado: '+newStatus,'#3b82f6');
+}
+function savePhaseDates(){
+  if(!activeId)return;
+  const d=DATA.find(function(x){return x.id===activeId;});
+  if(!d)return;
+  if(!d.fases)d.fases={};
+  PHASES_DEF.forEach(function(ph){
+    const ini=document.getElementById('fase-'+ph.key+'-ini');
+    const fim=document.getElementById('fase-'+ph.key+'-fim');
+    if(!d.fases[ph.key])d.fases[ph.key]={inicio:'',fim:''};
+    if(ini)d.fases[ph.key].inicio=ini.value;
+    if(fim)d.fases[ph.key].fim=fim.value;
+  });
+  const pss=document.getElementById('phase-status-sel');if(pss)d.status=pss.value;
+  go();if(cv==='gestao')renderGestao();
+  showToast('✅ Datas salvas!','#22c55e');
+}
+
+// ── EDIT MODE ──────────────────────────────────────────────────────────────────
+function toggleEdit(){
+  const d=DATA.find(function(x){return x.id===activeId;});
+  editBackup=JSON.parse(JSON.stringify(d));
+  editMode=true;
+  document.getElementById('btn-edit').style.display='none';
+  document.getElementById('btn-save').style.display='';
+  document.getElementById('btn-cancel').style.display='';
+  renderEditMode(d);
+}
+function edR(label,key,val){
+  return `<div class="edit-row"><label>${label}</label><input class="edit-field" id="ef-${key}" value="${esc(val||'')}"></div>`;
+}
+function edTA(label,key,val,rows){
+  return `<div class="edit-row"><label>${label}</label><textarea class="edit-field" id="ef-${key}" rows="${rows||3}">${esc(val||'')}</textarea></div>`;
+}
+function edSel(label,key,val,opts){
+  const opHtml=opts.map(function(o){return `<option value="${o[0]}"${val===o[0]?' selected':''}>${o[1]}</option>`;}). join('');
+  return `<div class="edit-row"><label>${label}</label><select class="edit-field" id="ef-${key}">${opHtml}</select></div>`;
+}
+function renderEditMode(d){
+  const p=d.prioridade||{};const c=d.criterios||{};
+  // ── Processo ──
+  const proc=document.getElementById('tp-proc');
+  if(proc)proc.innerHTML=`<div class="edit-section"><h4>Processo</h4>
+    ${edR('Processo',    'processo',  d.processo)}
+    <div class="edit-2col">${edR('Área','area',d.area)}${edR('Subárea / Time','subarea',d.subarea)}</div>
+    <div class="edit-2col">${edR('Frequência','frequencia',d.frequencia)}${edR('Volume Médio','volumeMedio',d.volumeMedio)}</div>
+    <div class="edit-2col">${edR('Tempo de Execução','tempoExecucao',d.tempoExecucao)}${edR('Nº de Pessoas','numPessoas',d.numPessoas)}</div>
+    ${edR('Tipo do Processo (separar por ;)','tipoProcesso',(d.tipoProcesso||[]).join(';'))}
+  </div>
+  <div class="edit-section"><h4>Contato</h4>
+    <div class="edit-2col">${edR('Solicitante','solicitante',d.solicitante)}${edR('E-mail','email',d.email)}</div>
+  </div>`;
+  // ── Critérios ──
+  const crit=document.getElementById('tp-crit');
+  if(crit){
+    const critFields=Object.keys(CRIT_LABELS).map(function(k){
+      const opts=[['SIM','✓ SIM'],['NÃO','✗ NÃO'],['PARCIAL','~ PARCIAL']];
+      return `<div class="crit-edit-item"><label>${CRIT_LABELS[k]}</label>
+        <select class="edit-field" id="ec-${k}">${opts.map(function(o){return `<option value="${o[0]}"${(c[k]||'NÃO')===o[0]?' selected':''}>${o[1]}</option>`;}).join('')}</select>
+      </div>`;
+    }).join('');
+    crit.innerHTML=`<div class="edit-section"><h4>Critérios Técnicos</h4><div class="crit-edit-grid">${critFields}</div></div>`;
+  }
+  // ── Automação ──
+  const auto=document.getElementById('tp-auto');
+  if(auto){
+    const toolOpts=[['n8n','n8n'],['RPA','RPA'],['RPA + n8n','RPA + n8n'],['n8n + RPA','n8n + RPA'],['IBM Automation','IBM Automation']].map(function(o){return `<option value="${o[0]}"${d.ferramenta===o[0]?' selected':''}>${o[1]}</option>`;}).join('');
+    const stOpts=STATUS_ORDER.map(function(st){return `<option value="${st}"${d.status===st?' selected':''}>${STATUS_INFO[st].icon} ${st}</option>`;}).join('');
+    auto.innerHTML=`<div class="edit-section"><h4>Automação</h4>
+      <div class="edit-2col">
+        <div class="edit-row"><label>Ferramenta</label><select class="edit-field" id="ef-ferramenta">${toolOpts}</select></div>
+        <div class="edit-row"><label>Status</label><select class="edit-field" id="ef-status">${stOpts}</select></div>
+      </div>
+      ${edR('Responsável','responsavel',d.responsavel)}
+      ${edTA('Escopo do Projeto (uma linha por item)','escopoAutomacao',(d.escopoAutomacao||[]).join('\n'),4)}
+    </div>`;
+  }
+  // ── Benefícios ──
+  const ben=document.getElementById('tp-ben');
+  if(ben){
+    const benFields=Object.keys(BEN_LABELS).map(function(k){
+      const v=(d.beneficios||{})[k]||1;
+      const opts=[1,2,3,4,5].map(function(n){return `<option value="${n}"${v===n?' selected':''}>${n} - ${n===1?'Muito Baixo':n===2?'Baixo':n===3?'Médio':n===4?'Alto':'Muito Alto'}</option>`;}).join('');
+      return `<div class="crit-edit-item"><label>${BEN_LABELS[k]}</label><select class="edit-field" id="eb-${k}">${opts}</select></div>`;
+    }).join('');
+    ben.innerHTML=`<div class="edit-section"><h4>Avaliação de Benefícios (1–5)</h4>
+      <div class="crit-edit-grid">${benFields}</div>
+    </div>
+    <div class="edit-section"><h4>FTE — Horas economizadas/mês</h4>
+      ${edR('Estimativa FTE (horas/mês)','fteHoras',d.fteHoras||0)}
+    </div>
+    <div class="edit-section"><h4>Benefícios Esperados da Automação (um por linha)</h4>
+      ${edTA('Ex: Redução de 4h/semana no fechamento contábil','beneficiosEsperados',(d.beneficiosEsperados||[]).join('\n'),4)}
+    </div>
+    <div class="edit-section"><h4>Benefício Qualitativo</h4>
+      ${edTA('Descreva o impacto qualitativo: melhora na experiência, confiabilidade, etc.','beneficioQualitativo',d.beneficioQualitativo||'',3)}
+    </div>`;
+  }
+  // ── Risco — gerenciado pelo grid, não pelo modo de edição ──
+  // ── Observação ──
+  const obs=document.getElementById('tp-obs');
+  if(obs)obs.innerHTML=`<div class="edit-section"><h4>Observações</h4>${edTA('Notas gerais','notas',d.notas,5)}</div>`;
+}
+function saveEdit(){
+  const idx=DATA.findIndex(function(x){return x.id===activeId;});
+  if(idx<0)return;
+  const d=DATA[idx];
+  // texto
+  ['solicitante','area','subarea','processo','responsavel','notas','email','frequencia','volumeMedio','tempoExecucao','numPessoas','beneficioQualitativo'].forEach(function(k){
+    const el=document.getElementById('ef-'+k);if(el)d[k]=el.value;
+  });
+  // tipo processo
+  const tpEl=document.getElementById('ef-tipoProcesso');
+  if(tpEl)d.tipoProcesso=tpEl.value.split(';').map(function(s){return s.trim();}).filter(Boolean);
+  // ferramenta / status
+  const ftEl=document.getElementById('ef-ferramenta');if(ftEl)d.ferramenta=ftEl.value;
+  const stEl=document.getElementById('ef-status');if(stEl)d.status=stEl.value;
+  // arrays
+  const esEl=document.getElementById('ef-escopoAutomacao');
+  if(esEl)d.escopoAutomacao=esEl.value.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+  const beEl=document.getElementById('ef-beneficiosEsperados');
+  if(beEl)d.beneficiosEsperados=beEl.value.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+  // beneficios numéricos
+  if(!d.beneficios)d.beneficios={};
+  Object.keys(BEN_LABELS).forEach(function(k){
+    const el=document.getElementById('eb-'+k);if(el)d.beneficios[k]=parseInt(el.value)||1;
+  });
+  // fte
+  const fteEl=document.getElementById('ef-fteHoras');
+  if(fteEl)d.fteHoras=parseFloat(fteEl.value)||0;
+  // criterios
+  if(!d.criterios)d.criterios={};
+  Object.keys(CRIT_LABELS).forEach(function(k){
+    const el=document.getElementById('ec-'+k);if(el)d.criterios[k]=el.value;
+  });
+  // score
+  const efEl=document.getElementById('m-ef');const cxEl=document.getElementById('m-cx');
+  const tmEl=document.getElementById('m-tm');const obEl=document.getElementById('m-ob');const ftpEl=document.getElementById('m-ft');
+  if(!d.prioridade)d.prioridade={};
+  if(efEl)d.prioridade.esforco=efEl.value;
+  if(cxEl)d.prioridade.complexidade=cxEl.value;
+  if(tmEl)d.prioridade.tempo=tmEl.value;
+  if(obEl)d.prioridade.objetivo=parseInt(obEl.value)||3;
+  if(ftpEl)d.prioridade.fte=ftpEl.value;
+  // fases
+  PHASES_DEF.forEach(function(ph){
+    const ini=document.getElementById('fase-'+ph.key+'-ini');
+    const fim=document.getElementById('fase-'+ph.key+'-fim');
+    if(!d.fases)d.fases={};
+    if(!d.fases[ph.key])d.fases[ph.key]={inicio:'',fim:''};
+    if(ini)d.fases[ph.key].inicio=ini.value;
+    if(fim)d.fases[ph.key].fim=fim.value;
+  });
+  editMode=false;editBackup=null;
+  // rebuild modal
+  const nmEl=document.getElementById('m-nm');if(nmEl)nmEl.textContent='#'+d.seq_id+' · '+d.solicitante;
+  const rlEl=document.getElementById('m-rl');if(rlEl)rlEl.textContent=d.processo;
+  const arEl=document.getElementById('m-ar');if(arEl)arEl.textContent='🏢 '+d.area+(d.subarea&&d.subarea!==d.area?' · '+d.subarea:'');
+  const mss=document.getElementById('m-status-sel');if(mss)mss.value=d.status;
+  buildTabs(d);
+  const ef2=document.getElementById('m-ef');if(ef2)ef2.value=d.prioridade.esforco||'medio';
+  const cx2=document.getElementById('m-cx');if(cx2)cx2.value=d.prioridade.complexidade||'medio';
+  const tm2=document.getElementById('m-tm');if(tm2)tm2.value=d.prioridade.tempo||'semanal';
+  const ob2=document.getElementById('m-ob');if(ob2)ob2.value=d.prioridade.objetivo||3;
+  const ft2=document.getElementById('m-ft');if(ft2)ft2.value=d.prioridade.fte||'medio';
+  recalc();
+  document.getElementById('btn-edit').style.display='';
+  document.getElementById('btn-save').style.display='none';
+  document.getElementById('btn-cancel').style.display='none';
+  go();if(cv==='gestao')renderGestao();
+  showToast('✅ Alterações salvas com sucesso!','#22c55e');
+}
+function cancelEdit(){
+  if(editBackup){
+    const idx=DATA.findIndex(function(x){return x.id===activeId;});
+    if(idx>=0)Object.assign(DATA[idx],editBackup);
+  }
+  editMode=false;editBackup=null;
+  const d=DATA.find(function(x){return x.id===activeId;});
+  buildTabs(d);
+  document.getElementById('btn-edit').style.display='';
+  document.getElementById('btn-save').style.display='none';
+  document.getElementById('btn-cancel').style.display='none';
+}
+
+// ── NEW ENTRY FORM ────────────────────────────────────────────────────────────
+let formStep=0,formData={};
+const FORM_STEPS=[
+  {id:'fs-id',    label:'Identificação',icon:'👤'},
+  {id:'fs-proc',  label:'Processo',     icon:'📋'},
+  {id:'fs-crit',  label:'Critérios',    icon:'✅'},
+  {id:'fs-ben',   label:'Benefícios',   icon:'📈'},
+  {id:'fs-score', label:'Priorização',  icon:'📊'},
+];
+function fv(id){const el=document.getElementById(id);return el?el.value:'';}
+function openForm(){
+  formStep=0;
+  formData={tipo:'formulario',fonte:'Workshop I',status:'Novo',ferramenta:'n8n',
+    criterios:{},beneficios:{},escopoAutomacao:[],beneficiosEsperados:[],
+    prioridade:{esforco:'medio',complexidade:'medio',tempo:'semanal',objetivo:3,fte:'medio'},
+    fases:{emAnalise:{inicio:'',fim:''},planejamento:{inicio:'',fim:''},backlog:{inicio:'',fim:''},
+           desenvolvimento:{inicio:'',fim:''},homologacao:{inicio:'',fim:''},
+           producao:{inicio:'',fim:''},concluido:{inicio:'',fim:''}},
+    fteHoras:0,risco:'',notas:''
+  };
+  renderFormStep();
+  document.getElementById('fov').classList.add('open');
+}
+function closeForm(){document.getElementById('fov').classList.remove('open');}
+function renderFormStep(){
+  const steps=FORM_STEPS;
+  document.getElementById('fov-steps').innerHTML=steps.map(function(s,i){
+    const cls=i<formStep?'fstep done':i===formStep?'fstep active':'fstep';
+    return `<div class="${cls}">${s.icon} ${s.label}</div>`;
+  }).join('');
+  document.getElementById('fstep-lbl').textContent=(formStep+1)+' / '+steps.length;
+  document.getElementById('btn-fprev').style.display=formStep>0?'':'none';
+  document.getElementById('btn-fnext').textContent=formStep===steps.length-1?'✅ Concluir':'Próximo →';
+  const body=document.getElementById('fov-body');
+  if(formStep===0)body.innerHTML=`
+    <div class="row"><div class="g"><label>Nome do Solicitante*</label><input id="f-sol" value="${esc(formData.solicitante||'')}"></div>
+      <div class="g"><label>E-mail</label><input id="f-email" value="${esc(formData.email||'')}"></div></div>
+    <div class="row"><div class="g"><label>Área*</label><input id="f-area" value="${esc(formData.area||'')}"></div>
+      <div class="g"><label>Subárea / Time</label><input id="f-sub" value="${esc(formData.subarea||'')}"></div></div>`;
+  else if(formStep===1)body.innerHTML=`
+    <div class="row full"><div class="g"><label>Processo*</label><input id="f-proc" value="${esc(formData.processo||'')}"></div></div>
+    <div class="row"><div class="g"><label>Frequência</label><select id="f-freq">
+      ${['Diário','Semanal','Quinzenal','Mensal','Anual'].map(function(x){return `<option${formData.frequencia===x?' selected':''}>${x}</option>`;}).join('')}</select></div>
+      <div class="g"><label>Nº de Pessoas</label><input id="f-pess" value="${esc(formData.numPessoas||'')}"></div></div>
+    <div class="row"><div class="g"><label>Tempo de Execução</label><input id="f-tempo" value="${esc(formData.tempoExecucao||'')}"></div>
+      <div class="g"><label>Volume Médio</label><input id="f-vol" value="${esc(formData.volumeMedio||'')}"></div></div>
+    <div class="row"><div class="g"><label>Complexidade</label><select id="f-cx">
+      ${[['baixo','Baixa'],['medio','Média'],['alto','Alta']].map(function(x){return `<option value="${x[0]}"${formData.prioridade.complexidade===x[0]?' selected':''}>${x[1]}</option>`;}).join('')}</select></div>
+      <div class="g"><label>Ferramenta Sugerida</label><select id="f-tool">
+      ${['n8n','RPA','RPA + n8n','n8n + RPA','IBM Automation'].map(function(x){return `<option${formData.ferramenta===x?' selected':''}>${x}</option>`;}).join('')}</select></div></div>`;
+  else if(formStep===2){
+    const simNaoOpts=function(k){const v=(formData.criterios||{})[k]||'NÃO';return [['SIM','✓ SIM'],['NÃO','✗ NÃO'],['PARCIAL','~ PARCIAL']].map(function(o){return `<option value="${o[0]}"${v===o[0]?' selected':''}>${o[1]}</option>`;}).join('');};
+    body.innerHTML='<div class="crit-edit-grid">'+Object.keys(CRIT_LABELS).map(function(k){return `<div class="crit-edit-item"><label>${CRIT_LABELS[k]}</label><select id="fc-${k}">${simNaoOpts(k)}</select></div>`;}).join('')+'</div>';
+  }
+  else if(formStep===3){
+    const benOpts=function(k){const v=(formData.beneficios||{})[k]||3;return [1,2,3,4,5].map(function(n){return `<option value="${n}"${v===n?' selected':''}>${n} - ${n===1?'M. Baixo':n===2?'Baixo':n===3?'Médio':n===4?'Alto':'M. Alto'}</option>`;}).join('');};
+    body.innerHTML='<div class="crit-edit-grid">'+Object.keys(BEN_LABELS).map(function(k){return `<div class="crit-edit-item"><label>${BEN_LABELS[k]}</label><select id="fb-${k}">${benOpts(k)}</select></div>`;}).join('')+'</div>'+
+    `<div class="g" style="margin-top:10px"><label>Estimativa FTE (horas/mês)</label><input type="number" id="f-fte" value="${formData.fteHoras||0}"></div>`;
+  }
+  else if(formStep===4){
+    const efOpts=[['baixo','Baixa (8)'],['medio','Média (14)'],['alto','Alta (20)']].map(function(x){return `<option value="${x[0]}"${formData.prioridade.esforco===x[0]?' selected':''}>${x[1]}</option>`;}).join('');
+    const tmOpts=[['diario','Diária (20)'],['semanal','Semanal (16)'],['quinzenal','Quinzenal (12)'],['mensal','Mensal (8)'],['anual','Anual (2)']].map(function(x){return `<option value="${x[0]}"${formData.prioridade.tempo===x[0]?' selected':''}>${x[1]}</option>`;}).join('');
+    const obOpts=[1,2,3,4,5].map(function(n){return `<option value="${n}"${formData.prioridade.objetivo===n?' selected':''}>${n}</option>`;}).join('');
+    const ftOpts=[['muito_baixo','&lt;10h (4)'],['baixo','10-40h (8)'],['medio','40-100h (12)'],['alto','100-200h (16)'],['muito_alto','&gt;200h (20)']].map(function(x){return `<option value="${x[0]}"${formData.prioridade.fte===x[0]?' selected':''}>${x[1]}</option>`;}).join('');
+    body.innerHTML=`<div class="row">
+      <div class="g"><label>Esforço / Viabilidade</label><select id="f-ef">${efOpts}</select></div>
+      <div class="g"><label>Frequência / Retorno</label><select id="f-tm">${tmOpts}</select></div>
+    </div>
+    <div class="row">
+      <div class="g"><label>Alinhamento Estratégico (1-5)</label><select id="f-ob">${obOpts}</select></div>
+      <div class="g"><label>FTE — Impacto em Horas</label><select id="f-ft">${ftOpts}</select></div>
+    </div>
+    <div class="row full"><div class="g"><label>Responsável</label><input id="f-resp" value="${esc(formData.responsavel||'')}"></div></div>`;
+  }
+}
+function formNext(){
+  // collect current step
+  if(formStep===0){formData.solicitante=fv('f-sol');formData.email=fv('f-email');formData.area=fv('f-area');formData.subarea=fv('f-sub');
+    if(!formData.solicitante||!formData.area){showToast('Preencha nome e área','#ef4444');return;}}
+  else if(formStep===1){formData.processo=fv('f-proc');formData.frequencia=fv('f-freq');formData.numPessoas=fv('f-pess');formData.tempoExecucao=fv('f-tempo');formData.volumeMedio=fv('f-vol');formData.prioridade.complexidade=fv('f-cx');formData.ferramenta=fv('f-tool');
+    if(!formData.processo){showToast('Informe o processo','#ef4444');return;}}
+  else if(formStep===2){if(!formData.criterios)formData.criterios={};Object.keys(CRIT_LABELS).forEach(function(k){formData.criterios[k]=fv('fc-'+k);});}
+  else if(formStep===3){if(!formData.beneficios)formData.beneficios={};Object.keys(BEN_LABELS).forEach(function(k){formData.beneficios[k]=parseInt(fv('fb-'+k))||3;});formData.fteHoras=parseFloat(fv('f-fte'))||0;}
+  else if(formStep===4){formData.prioridade.esforco=fv('f-ef');formData.prioridade.tempo=fv('f-tm');formData.prioridade.objetivo=parseInt(fv('f-ob'))||3;formData.prioridade.fte=fv('f-ft');formData.responsavel=fv('f-resp');
+    // done!
+    const maxSeq=DATA.reduce(function(m,d){return Math.max(m,parseInt(d.seq_id)||0);},0);
+    const maxNum=DATA.reduce(function(m,d){return Math.max(m,parseInt((d.id||'0').replace(/\D/g,''))||0);},0);
+    formData.id='WSI'+String(maxNum+1).padStart(2,'0');
+    formData.seq_id=String(maxSeq+1).padStart(4,'0');
+    formData.tipoProcesso=[];
+    DATA.push(formData);
+    closeForm();go();
+    showToast('✅ Oportunidade adicionada: '+formData.processo,'#22c55e');
+    return;
+  }
+  formStep++;renderFormStep();
+}
+function formPrev(){if(formStep>0){formStep--;renderFormStep();}}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function showToast(msg,color){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.background=color||'#2a5298';
+  t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},3000);
+}
+
+go();
+</script>
+</body>
+</html>
