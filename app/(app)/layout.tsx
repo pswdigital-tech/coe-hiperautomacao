@@ -115,6 +115,13 @@ export default async function AppLayout({
           // a autorização de escrita de fato — é resolvido pela própria tela e
           // pela RPC, contra `staff_writable_tenant_ids()`.
           canRegisterForTenant={isAdmin || staffAdmin}
+          // Importação em massa é ato de ADMINISTRAÇÃO da empresa, não de
+          // pipeline: super-admin, admin da empresa, ou staff PSW COM concessão
+          // de admin (0045). É o mesmo conjunto de `canAdminister` mais o
+          // super-admin — e o mesmo que `import_writable_tenant_ids()` (0059)
+          // devolve no banco. Papel basta como gate de MENU; a tela e a RPC
+          // resolvem o conjunto de empresas de fato.
+          canImport={isAdmin || canAdminister}
           selectedEmpresa={selectedEmpresa}
           logoUrl={branding.logoUrl}
         />

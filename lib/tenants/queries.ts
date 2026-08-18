@@ -205,3 +205,29 @@ export async function getCurrentTenant(): Promise<PublicTenant | null> {
     logoUrl: publicLogoUrl(t.logo_path),
   };
 }
+
+/**
+ * Empresas em que o usuário corrente pode IMPORTAR oportunidades em massa
+ * (tela `/opportunities/import`, migration 0059).
+ *
+ * FONTE ÚNICA: a função SQL `import_writable_tenant_ids()` — a MESMA que a RPC
+ * `import_opportunities` consulta para autorizar a escrita, pelo mesmo motivo
+ * de `fetchStaffWritableTenants()` acima: a UI não pode oferecer uma empresa
+ * que o banco depois recusa, nem esconder uma que ele aceitaria.
+ *
+ * Não confundir com `fetchStaffWritableTenants()`: aquela inclui a empresa onde
+ * um `psw_staff` só tem oportunidade ATRIBUÍDA (basta para registrar UMA
+ * demanda); esta exige concessão de ADMIN da empresa (0045) — importar em massa
+ * é ato de administração. Devolve vazio para `member`/`viewer`, que é o que faz
+ * a tela sumir para eles mesmo por URL direta.
+ */
+export async function fetchImportableTenants(): Promise<TenantSummary[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('import_writable_tenant_ids');
+  if (error) {
+    console.error('[tenants/queries] import_writable_tenant_ids:', error.message);
+    return [];
+  }
+  const ids = (data ?? []) as unknown as string[];
+  return fetchTenantsByIds(ids);
+}

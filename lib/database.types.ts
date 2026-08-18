@@ -1214,6 +1214,23 @@ export type Database = {
         Args: { p_tenant_id: string; p_payload: Json };
         Returns: string;
       };
+      // 0059 — importação em massa. `import_writable_tenant_ids` é a fonte
+      // única do "onde posso importar" (alimenta o seletor da tela E a
+      // autorização dentro de `import_opportunities`). Conjunto MENOR que o de
+      // `staff_writable_tenant_ids`: aqui o `psw_staff` precisa de concessão de
+      // ADMIN da empresa (0045), não basta ter oportunidade atribuída.
+      import_writable_tenant_ids: {
+        Args: Record<string, never>;
+        Returns: string[];
+      };
+      import_opportunities: {
+        // p_rows: array de objetos (uma oportunidade por posição, com a chave
+        // extra `linha` = a linha do arquivo, para a UI apontar o erro).
+        // p_assignee_ids: profiles atribuídos a TODAS as linhas criadas.
+        Args: { p_tenant_id: string; p_rows: Json; p_assignee_ids?: string[] };
+        // { inseridas, ids[], atribuicoes, puladas[{linha,processo,seq_id}] }
+        Returns: Json;
+      };
       // 0038 — trilha de auditoria de UMA oportunidade (ela + filhos), com
       // gate de tenant explícito dentro da função. É por aqui que a aba
       // "Histórico" lê, já que o select direto em `audit_log` é admin-only.
