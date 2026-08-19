@@ -11,6 +11,7 @@
 // =============================================================================
 import { describe, it, expect } from 'vitest';
 import { taskInputSchema } from '@/lib/opportunities/task-schema';
+import { TASK_STATUS_ORDER } from '@/lib/opportunities/task-labels';
 
 describe('taskInputSchema — payload mínimo e status', () => {
   it('(a) payload mínimo válido (só título) passa', () => {
@@ -49,11 +50,18 @@ describe('taskInputSchema — payload mínimo e status', () => {
     expect(result.success).toBe(true);
   });
 
-  it('(e) cada um dos outros três status passa sem motivo', () => {
-    for (const status of ['backlog', 'em_andamento', 'finalizado'] as const) {
+  it('(e) todo status que não é bloqueio passa sem motivo', () => {
+    for (const status of TASK_STATUS_ORDER.filter((s) => s !== 'bloqueio')) {
       const result = taskInputSchema.safeParse({ title: 'X', status });
       expect(result.success).toBe(true);
     }
+  });
+
+  // 0060 — o valor novo precisa ser aceito pelo Zod (senão o formulário e o
+  // drop no Kanban falham na validação antes de chegar ao banco) E não pode
+  // ter herdado a exigência de motivo, que é exclusiva de `bloqueio`.
+  it('(e2) homologacao é um status válido e não exige motivo', () => {
+    expect(taskInputSchema.safeParse({ title: 'X', status: 'homologacao' }).success).toBe(true);
   });
 });
 

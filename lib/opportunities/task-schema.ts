@@ -16,11 +16,15 @@ import { z } from 'zod';
 // a impõem.
 // =============================================================================
 
+// 0060 — `homologacao` entrou como 5º valor; a ordem aqui não tem efeito de
+// UI (quem ordena as colunas é `TASK_STATUS_ORDER`), mas segue a do fluxo para
+// não divergir da leitura do Kanban.
 export const taskStatusEnum = z.enum([
   'backlog',
   'em_andamento',
-  'bloqueio',
+  'homologacao',
   'finalizado',
+  'bloqueio',
 ]);
 
 // 0049 — tag de prioridade. `.default('media')` espelha o default da coluna:

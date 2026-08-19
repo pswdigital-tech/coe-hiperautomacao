@@ -107,15 +107,19 @@ describe('computeTaskRollup — comportamentos declarados no plano 16-04', () =>
     expect(result.percentComplete).toBe(50);
   });
 
-  it('só finalizado conta como concluída; backlog, em_andamento e bloqueio não contam', () => {
+  // 0060: `homologacao` entra aqui junto dos não-concluídos de propósito — a
+  // subtarefa em validação ainda pode voltar, e contá-la como pronta faria o
+  // percentual do plano mentir exatamente no momento em que ele mais é olhado.
+  it('só finalizado conta como concluída; backlog, em_andamento, homologacao e bloqueio não contam', () => {
     const result = computeTaskRollup([
       mkTask({ status: 'finalizado' }),
       mkTask({ status: 'backlog' }),
       mkTask({ status: 'em_andamento' }),
+      mkTask({ status: 'homologacao' }),
       mkTask({ status: 'bloqueio' }),
     ]);
     expect(result.completedChildren).toBe(1);
-    expect(result.percentComplete).toBe(25);
+    expect(result.percentComplete).toBe(20);
   });
 
   it('a função não lê nem escreve nada: mesma entrada devolve sempre a mesma saída', () => {

@@ -24,7 +24,7 @@ function pad3(n: number): string {
 }
 
 /**
- * Quadro Kanban das tarefas de UMA oportunidade — 4 colunas FIXAS na ordem
+ * Quadro Kanban das tarefas de UMA oportunidade — colunas FIXAS na ordem
  * travada (`TASK_STATUS_ORDER`, D-03), nunca parametrizadas por prop. Clona
  * `kanban/Board.tsx` (sensor de ponteiro, ressincronização por prop, banner
  * de erro) em tudo que não seja o caminho do drop, que ramifica pela função

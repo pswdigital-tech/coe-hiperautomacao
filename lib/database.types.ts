@@ -65,9 +65,16 @@ export type RiskProbability = 'provavel' | 'possivel' | 'improvavel' | 'remota';
 export type RiskStatus = 'novo' | 'gerenciado' | 'mitigado' | 'ocorrido';
 export type RiskPriority = 'critica' | 'alta' | 'media' | 'baixa';
 
-// opportunity_tasks (0037, Phase 16) — 4 valores fixos = as 4 colunas do
-// Kanban de tarefas (D-03): Backlog → Em Andamento → Bloqueio → Finalizado.
-export type TaskStatus = 'backlog' | 'em_andamento' | 'bloqueio' | 'finalizado';
+// opportunity_tasks (0037, Phase 16; 5º valor em 0060) — as colunas do Kanban
+// de tarefas (D-03): Backlog → Em Andamento → Homologação → Finalizado →
+// Bloqueio. A ordem das COLUNAS é a de `TASK_STATUS_ORDER`
+// (lib/opportunities/task-labels.ts), não a desta união nem a do enum no banco.
+export type TaskStatus =
+  | 'backlog'
+  | 'em_andamento'
+  | 'homologacao'
+  | 'finalizado'
+  | 'bloqueio';
 
 // opportunity_tasks (0049) — tag de prioridade de tarefa/subtarefa. MESMO
 // vocabulário de `priority_level` das oportunidades (alta/media/baixa), não o

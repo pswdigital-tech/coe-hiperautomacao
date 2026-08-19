@@ -19,8 +19,8 @@ function parseTaskView(raw: string | undefined): TaskView {
 }
 
 /**
- * Sub-rota fullscreen do Plano de Atividades (RESEARCH §Pattern 6 — o Kanban de
- * 4 colunas e o Gantt não cabem na largura do modal). A view Lista (16-04) já
+ * Sub-rota fullscreen do Plano de Atividades (RESEARCH §Pattern 6 — o Kanban
+ * de status e o Gantt não cabem na largura do modal). A view Lista (16-04) já
  * mostra a hierarquia de 2 níveis com rollup; o Kanban (16-06) e o Gantt
  * (16-07) ramificam pelo parâmetro `?view=`, ambos sobre a MESMA busca única
  * — nenhuma query nova por view. Mesmo wrapper de padding/largura máxima de

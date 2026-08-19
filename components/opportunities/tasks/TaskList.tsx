@@ -98,6 +98,12 @@ export function TaskList({
   // frente o que já foi feito; o cabeçalho com a contagem fica sempre visível
   // para que nunca pareça que a tarefa sumiu.
   const [showCompleted, setShowCompleted] = useState(false);
+  // Homologação (0060) nasce ABERTO, ao contrário do de concluídas: é trabalho
+  // VIVO, esperando alguém validar. Fechado por padrão, o grid viraria o lugar
+  // onde a tarefa some — que é exatamente o problema que a coluna nova veio
+  // resolver. Sai do grid principal só para não se misturar com o que ainda
+  // está sendo feito.
+  const [showHomologacao, setShowHomologacao] = useState(true);
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -164,7 +170,7 @@ export function TaskList({
   const rootIndexById = new Map(allRoots.map((t, i) => [t.id, i]));
 
   // ===========================================================================
-  // Pendentes × concluídas — dois grids (v0.5)
+  // Em execução × homologação × concluídas — três grids (v0.5; 3º em 0060)
   // ===========================================================================
   // Uma tarefa RAIZ finalizada sai do grid principal e desce para o grid de
   // concluídas: o Plano de Atividades é sobre o que ainda falta fazer, e tarefa
@@ -173,10 +179,20 @@ export function TaskList({
   // concluída, senão o identificador deixaria de servir para conversar sobre a
   // tarefa) e nada é gravado.
   //
+  // 0060 abre o MESMO recorte para `homologacao`, num grid próprio ANTES do de
+  // concluídas. Elas não são "pendentes" no mesmo sentido das demais — a bola
+  // não está mais com quem executa, e sim com quem valida —, mas também não
+  // estão prontas. Deixá-las no grid principal fazia o time olhar todo dia para
+  // um trabalho que não depende dele; empurrá-las para o grid de concluídas
+  // seria pior ainda, porque some com o que ainda pode voltar.
+  //
   // Só o status da RAIZ move a linha: subtarefa finalizada continua dentro da
   // sua pai, porque a pai é que representa o trabalho no plano — o quanto dela
   // já saiu continua legível no badge "x/y concluídas".
-  const activeRoots = allRoots.filter((r) => r.status !== 'finalizado');
+  const activeRoots = allRoots.filter(
+    (r) => r.status !== 'finalizado' && r.status !== 'homologacao'
+  );
+  const homologacaoRoots = allRoots.filter((r) => r.status === 'homologacao');
   const completedRoots = allRoots.filter((r) => r.status === 'finalizado');
 
   function rootMatches(r: OpportunityTask): boolean {
@@ -184,8 +200,11 @@ export function TaskList({
   }
 
   const filteredRoots = !needle ? activeRoots : activeRoots.filter(rootMatches);
-  // A busca varre os dois grids — procurar uma tarefa e não achá-la porque ela
-  // foi concluída seria pior que a poluição que o segundo grid resolve.
+  // A busca varre os TRÊS grids — procurar uma tarefa e não achá-la porque ela
+  // saiu do grid principal seria pior que a poluição que a separação resolve.
+  const filteredHomologacao = !needle
+    ? homologacaoRoots
+    : homologacaoRoots.filter(rootMatches);
   const filteredCompleted = !needle
     ? completedRoots
     : completedRoots.filter(rootMatches);
@@ -272,12 +291,14 @@ export function TaskList({
 
   /**
    * Uma tarefa raiz + suas subtarefas (quando expandida), como linhas de
-   * tabela. Os DOIS grids — pendentes e concluídas — renderizam por aqui: duas
-   * cópias da linha divergiriam no primeiro ajuste de coluna.
+   * tabela. Os TRÊS grids — em execução, em homologação e concluídas —
+   * renderizam por aqui: cópias da linha divergiriam no primeiro ajuste de
+   * coluna.
    *
-   * `Row` decide se a linha é arrastável. O grid de concluídas vive FORA do
-   * `DndContext` (reordenar o que já terminou não muda nada no plano), então
-   * usa a linha simples — e por isso o `SortableContext` das subtarefas também
+   * `Row` decide se a linha é arrastável. Os grids de homologação e de
+   * concluídas vivem FORA do `DndContext` (reordenar o que já saiu da mão do
+   * time não muda nada no plano), então usam a linha simples — e por isso o
+   * `SortableContext` das subtarefas também
    * é condicional: fora de um DndContext ele não teria a quem falar.
    */
   function renderRootRows(
@@ -569,7 +590,7 @@ export function TaskList({
       )}
 
       {/* ---------------------------------------------------------------
-          Grid 1 — o plano de verdade: só o que ainda não terminou.
+          Grid 1 — o plano de verdade: só o que ainda está com o time.
           --------------------------------------------------------------- */}
       <div className="bg-wh border border-bdr rounded-xl overflow-hidden shadow-sm">
         {roots.length > 0 && (
@@ -604,6 +625,11 @@ export function TaskList({
                 <>
                   Nenhuma tarefa pendente encontrada para{' '}
                   <strong>“{query.trim()}”</strong>.
+                </>
+              ) : homologacaoRoots.length > 0 ? (
+                <>
+                  Nenhuma tarefa pendente — o que ainda não fechou está em
+                  homologação, logo abaixo. 🧪
                 </>
               ) : (
                 <>Nenhuma tarefa pendente — tudo o que existe aqui já foi concluído. 🎉</>
@@ -672,7 +698,65 @@ export function TaskList({
       </div>
 
       {/* ---------------------------------------------------------------
-          Grid 2 — as concluídas, fora do caminho.
+          Grid 2 — em homologação: feito, aguardando validação.
+          Mesma forma do grid de concluídas (mesmo cabeçalho de colunas, mesma
+          `renderRootRows`, mesma ausência de arrasto — reordenar o que está na
+          mão de outra pessoa não muda a fila do time). Só a cor e o estado
+          inicial mudam: nasce ABERTO, porque isto ainda é trabalho vivo.
+          --------------------------------------------------------------- */}
+      {homologacaoRoots.length > 0 && (
+        <div className="bg-wh border border-bdr rounded-xl overflow-hidden shadow-sm">
+          <button
+            type="button"
+            onClick={() => setShowHomologacao((v) => !v)}
+            aria-expanded={showHomologacao}
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-bg transition-colors focus:outline-none focus:ring-2 focus:ring-pri"
+          >
+            <span
+              aria-hidden="true"
+              className={`inline-block text-[11px] text-mut transition-transform ${
+                showHomologacao ? 'rotate-90' : ''
+              }`}
+            >
+              ▶
+            </span>
+            <span className="text-[13px] font-bold text-txt">
+              <span aria-hidden="true">🧪</span> Tarefas em homologação
+            </span>
+            <span className="px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-900/40 text-cyan-800 dark:text-cyan-300 text-[10px] font-bold tabular-nums">
+              {homologacaoRoots.length}
+            </span>
+            <span className="ml-auto text-[11px] text-mut">
+              {showHomologacao ? 'Ocultar' : 'Mostrar'}
+            </span>
+          </button>
+
+          {showHomologacao && (
+            <div className="border-t border-bdr">
+              {filteredHomologacao.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <TaskTableHead readOnly={readOnly} />
+                    <tbody>
+                      {filteredHomologacao.map((root) =>
+                        renderRootRows(root, PlainTaskRow, false)
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="px-4 py-6 text-center text-[12px] text-mut">
+                  Nenhuma tarefa em homologação encontrada para{' '}
+                  <strong>“{query.trim()}”</strong>.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------
+          Grid 3 — as concluídas, fora do caminho.
           Mesmas colunas e mesma numeração do grid de cima (é a mesma
           `renderRootRows`), sem arrasto: reordenar o que já terminou não
           muda nada no plano. Nasce fechado; o cabeçalho com a contagem
@@ -765,9 +849,9 @@ function PageButton({
 }
 
 /**
- * Cabeçalho das colunas — um só, compartilhado pelos grids de pendentes e de
- * concluídas: os dois mostram exatamente as mesmas colunas, e duas cópias
- * divergiriam no primeiro ajuste.
+ * Cabeçalho das colunas — um só, compartilhado pelos três grids (em execução,
+ * em homologação e concluídas): todos mostram exatamente as mesmas colunas, e
+ * cópias divergiriam no primeiro ajuste.
  */
 function TaskTableHead({ readOnly }: { readOnly: boolean }) {
   return (
