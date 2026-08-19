@@ -62,6 +62,9 @@ export const FIELD_LABEL: Record<string, string> = {
   execucoes_mes: 'Execuções/mês',
   data_conclusao: 'Data de Conclusão',
   beneficio_qualitativo: 'Benefício Qualitativo',
+  objetivo_projeto: 'Objetivo do Projeto', // 0061
+  fora_escopo: 'Fora do escopo',
+  criterios_aceite: 'Critérios de aceite',
   fte_horas: 'FTE (h/mês)',
   fte: 'Faixa de FTE',
   criterios: 'Critérios',
@@ -243,7 +246,11 @@ export function recordName(
   if (!data) return null;
   const candidates: Record<string, string[]> = {
     opportunities: ['processo', 'solicitante'],
-    opportunity_tasks: ['titulo'],
+    // A coluna é `title` (identificadores da tabela são em inglês, ver
+    // DATA-MODEL §Princípios). Procurar `titulo` aqui nunca casava, e o
+    // efeito era toda tarefa aparecer sem nome no Histórico e no bloco
+    // "O que mudou recentemente".
+    opportunity_tasks: ['title'],
     opportunity_risks: ['descricao'],
     opportunity_notes: ['texto'],
     opportunity_documents: ['nome'],

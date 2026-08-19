@@ -72,8 +72,14 @@ describe('formatDateTime', () => {
 describe('recordName', () => {
   // O registro pode já ter sido APAGADO quando o admin lê o log — o nome tem
   // que sair da própria linha logada, nunca de um lookup no banco.
+  //
+  // O fixture usa `title`, o nome REAL da coluna. A versão anterior deste teste
+  // usava `titulo`, que não existe em `opportunity_tasks` — o teste passava
+  // porque repetia a mesma premissa errada do código, e na tela toda tarefa
+  // aparecia sem nome. Fixture de auditoria tem que espelhar a linha como o
+  // banco a grava, não como se imagina que ela seja.
   it('extrai a identificação da linha logada, por tabela', () => {
-    expect(recordName('opportunity_tasks', { titulo: 'Revisar contrato' })).toBe(
+    expect(recordName('opportunity_tasks', { title: 'Revisar contrato' })).toBe(
       'Revisar contrato'
     );
     expect(recordName('opportunities', { processo: 'Fechamento', solicitante: 'Ana' })).toBe(
@@ -85,8 +91,32 @@ describe('recordName', () => {
 
   it('trunca nome longo e devolve null quando não há candidato', () => {
     const longo = 'x'.repeat(100);
-    expect(recordName('opportunity_tasks', { titulo: longo })).toHaveLength(61); // 60 + reticência
+    expect(recordName('opportunity_tasks', { title: longo })).toHaveLength(61); // 60 + reticência
     expect(recordName('opportunity_tasks', {})).toBeNull();
     expect(recordName('opportunity_tasks', null)).toBeNull();
+  });
+});
+
+// =============================================================================
+// Regressão do mapa de colunas: `opportunity_tasks` guarda o título em `title`.
+// Com o mapa apontando para `titulo`, toda tarefa saía sem nome no Histórico e
+// no bloco "O que mudou recentemente" da Visão Geral — sem erro nenhum, só
+// silêncio. Este teste existe para que o mapa não volte a divergir do schema.
+// =============================================================================
+describe('recordName — nomes de coluna casam com o schema', () => {
+  it('não acha nada quando a chave procurada não é a do schema', () => {
+    expect(recordName('opportunity_tasks', { titulo: 'chave errada' })).toBeNull();
+  });
+
+  it('acha o nome nas demais tabelas auditadas', () => {
+    expect(recordName('opportunity_risks', { descricao: 'Dependência do Jurídico' })).toBe(
+      'Dependência do Jurídico'
+    );
+    expect(recordName('opportunity_documents', { nome: 'Arquitetura.pdf' })).toBe(
+      'Arquitetura.pdf'
+    );
+    expect(recordName('opportunity_notes', { texto: 'Alinhado com o cliente' })).toBe(
+      'Alinhado com o cliente'
+    );
   });
 });
