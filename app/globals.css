@@ -108,3 +108,26 @@ body {
     font-size: 16px;
   }
 }
+
+/* Barra de progresso INDETERMINADA (ReprocessAiButton). Usada via
+   `animate-[loading-slide_1.4s_ease-in-out_infinite]`: a espera do
+   reprocesso da IA não tem progresso observável, então a barra comunica
+   "em andamento" — nunca uma porcentagem que seria inventada. */
+@keyframes loading-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+/* Respeita quem pediu menos movimento no sistema: o painel de progresso
+   continua legível pelo texto e pelo cronômetro. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-\[loading-slide_1\.4s_ease-in-out_infinite\] {
+    animation: none;
+    width: 100%;
+    opacity: 0.5;
+  }
+}

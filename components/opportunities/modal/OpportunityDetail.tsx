@@ -120,6 +120,11 @@ type Props = {
   assignees: Assignee[];
   assignableProfiles: AssignableProfile[];
   canAssign: boolean;
+  /**
+   * Reprocessar o enriquecimento por IA — privilégio de admin, resolvido no
+   * servidor pelo mesmo predicado de `canAssign`. Repassado ao DetailHeader.
+   */
+  canReprocessAi?: boolean;
 };
 
 export function OpportunityDetail({
@@ -137,6 +142,7 @@ export function OpportunityDetail({
   assignees,
   assignableProfiles,
   canAssign,
+  canReprocessAi = false,
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>('tarefas');
 
@@ -269,6 +275,7 @@ export function OpportunityDetail({
         assignees={assignees}
         assignableProfiles={assignableProfiles}
         canAssign={canAssign}
+        canReprocessAi={canReprocessAi}
       />
 
       {/* Abas horizontais (v0.5) — o rail vertical saiu: com o Plano de

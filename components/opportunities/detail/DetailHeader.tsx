@@ -8,6 +8,7 @@ import { getInitials, scoreColor } from '@/lib/opportunities/utils';
 import { StatusSelector } from '@/components/opportunities/modal/StatusSelector';
 import { DeleteButton } from '@/components/opportunities/modal/DeleteButton';
 import { AiEnrichmentBadge } from '@/components/opportunities/modal/AiEnrichmentBadge';
+import { ReprocessAiButton } from '@/components/opportunities/modal/ReprocessAiButton';
 import { getLastListUrl } from '@/lib/opportunities/filters-storage';
 import { AssigneesStack } from './AssigneesStack';
 
@@ -30,6 +31,15 @@ type Props = {
   assignees: Assignee[];
   assignableProfiles: AssignableProfile[];
   canAssign: boolean;
+  /**
+   * Reprocessar o enriquecimento por IA é privilégio de admin: super-admin da
+   * plataforma, staff PSW com concessão de admin NESTA empresa (0045) ou admin
+   * da própria empresa. Resolvido no servidor
+   * (`app/(app)/opportunities/[id]/page.tsx`) pelo mesmo predicado de
+   * `canAssign` — aqui só decide o que é montado; o bloqueio real está na
+   * Server Action e na RLS.
+   */
+  canReprocessAi?: boolean;
 };
 
 const PRIORITY_LABEL: Record<'alta' | 'media' | 'baixa', string> = {
@@ -64,6 +74,7 @@ export function DetailHeader({
   assignees,
   assignableProfiles,
   canAssign,
+  canReprocessAi = false,
 }: Props) {
   const [managing, setManaging] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -224,6 +235,27 @@ export function DetailHeader({
                 </button>
               </>
             ))}
+
+          {/* Reprocessar a IA é uma ação RECORRENTE, não um resgate de erro:
+              a pessoa corrige o processo, reprocessa, corrige de novo,
+              reprocessa de novo. Por isso o botão fica fixo na barra (some só
+              no modo edição, onde Salvar/Cancelar mandam) em vez de aparecer
+              apenas quando o último enriquecimento falhou — nesse desenho ele
+              desaparecia justamente depois de dar certo. No estado de falha
+              ganha contorno vermelho, que é quando ele também vira urgente. */}
+          {canReprocessAi && !editMode && (
+            <ReprocessAiButton
+              opportunityId={o.id}
+              status={o.ai_enrichment_status}
+              error={o.ai_enrichment_error}
+              triggerClassName={
+                'px-3 py-2 rounded-lg text-[12px] font-bold inline-flex items-center gap-1.5 transition-colors ' +
+                (o.ai_enrichment_status === 'failed'
+                  ? 'border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-950/60'
+                  : 'border border-bdr bg-wh text-txt hover:bg-bg')
+              }
+            />
+          )}
 
           {canAssign && (
             <button

@@ -76,6 +76,14 @@ export default async function OpportunityDetailPage({
   // gate visual mais restrito que o banco seria dívida silenciosa.
   const canAssign =
     isPlatformAdmin(profile) || (await isTenantAdminOf(profile, opportunity.tenant_id));
+
+  // Reprocessar a análise da IA (lib/ai/reprocess-actions.ts) tem EXATAMENTE o
+  // mesmo gate de atribuir: super-admin da plataforma, staff PSW com concessão
+  // de admin nesta empresa (0045) ou admin da própria empresa. Reusa o valor já
+  // resolvido em vez de repetir a ida ao banco de `isTenantAdminOf`; a constante
+  // separada existe para que mudar um dos dois gates no futuro não mude o outro
+  // por acidente. O bloqueio real continua na Server Action + RLS.
+  const canReprocessAi = canAssign;
   const assignableProfiles = !canAssign
     ? []
     : isPlatformAdmin(profile) || isPswStaff(profile)
@@ -121,6 +129,7 @@ export default async function OpportunityDetailPage({
           assignees={assignees}
           assignableProfiles={assignableProfiles}
           canAssign={canAssign}
+          canReprocessAi={canReprocessAi}
         />
       </div>
     </div>
