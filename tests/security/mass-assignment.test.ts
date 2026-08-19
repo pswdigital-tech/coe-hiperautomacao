@@ -176,3 +176,63 @@ describe('Mass Assignment defense (Bloco B)', () => {
     });
   });
 });
+
+// =============================================================================
+// 0062 — campos da seção Solução. Mesma proteção dos arrays já existentes:
+// item longo e array inflado são recusados ANTES de chegar ao banco, e os
+// campos continuam OPCIONAIS (oportunidade antiga, sem eles, segue válida).
+// =============================================================================
+describe('0062/0063 — fora_escopo / criterios_aceite (o objetivo é um só)', () => {
+  it('aceita a oportunidade SEM os campos novos (retrocompatível)', () => {
+    const parsed = opportunityInputSchema.safeParse(VALID_PERSONA);
+    expect(parsed.success).toBe(true);
+  });
+
+  it('aceita os três preenchidos', () => {
+    const ok = {
+      ...VALID_PERSONA,
+      fora_escopo: ['Integração com o legado', 'Migração de histórico'],
+      criterios_aceite: ['Resposta em até 5s', 'Citação da fonte em toda resposta'],
+    };
+    expect(opportunityInputSchema.safeParse(ok).success).toBe(true);
+  });
+
+  it('rejeita objetivo_projeto acima de 2000 chars', () => {
+    const bad = { ...VALID_PERSONA, objetivo_projeto: 'x'.repeat(2001) };
+    expect(opportunityInputSchema.safeParse(bad).success).toBe(false);
+  });
+
+  // 0063: "objetivo da solução" e "objetivo do projeto" são a mesma coisa —
+  // existe UM campo. Chave desconhecida no schema .strict() é recusada, e é
+  // isso que impede a coluna morta de voltar por um payload esquecido.
+  it('não aceita mais `objetivo_solucao` — o campo deixou de existir', () => {
+    const bad = { ...VALID_PERSONA, objetivo_solucao: 'texto' };
+    expect(opportunityInputSchema.safeParse(bad).success).toBe(false);
+  });
+
+  it('rejeita array inflado — mesma trava de escopo_automacao (DoS)', () => {
+    expect(
+      opportunityInputSchema.safeParse({
+        ...VALID_PERSONA,
+        fora_escopo: Array(21).fill('x'),
+      }).success
+    ).toBe(false);
+    expect(
+      opportunityInputSchema.safeParse({
+        ...VALID_PERSONA,
+        criterios_aceite: Array(100).fill('x'),
+      }).success
+    ).toBe(false);
+  });
+
+  it('rejeita item acima de 200 chars nos dois arrays', () => {
+    const longo = 'x'.repeat(201);
+    expect(
+      opportunityInputSchema.safeParse({ ...VALID_PERSONA, fora_escopo: [longo] }).success
+    ).toBe(false);
+    expect(
+      opportunityInputSchema.safeParse({ ...VALID_PERSONA, criterios_aceite: [longo] })
+        .success
+    ).toBe(false);
+  });
+});

@@ -1,17 +1,9 @@
 import Link from 'next/link';
-import type { Opportunity, OpportunityTask } from '@/lib/opportunities/types';
-import { StatusBadge } from '@/components/opportunities/cells';
-import {
-  GATILHO_LABELS,
-  FORMATO_ENTRADA_LABELS,
-  DADOS_SENSIVEIS_LABELS,
-  labelOf,
-} from '@/lib/opportunities/discovery-labels';
+import type { OpportunityTask } from '@/lib/opportunities/types';
 import { TASK_STATUS_ORDER, TASK_STATUS_META } from '@/lib/opportunities/task-labels';
 import { summarizeTasks, nextDeliveries } from '@/lib/opportunities/task-summary';
 
 type Props = {
-  opportunity: Opportunity;
   /** Array PLANO já buscado pela página — nenhuma query nova nesta coluna. */
   tasks: OpportunityTask[];
   /** Data de HOJE (ISO YYYY-MM-DD) vinda do servidor — ver `task-summary.ts`. */
@@ -27,42 +19,23 @@ function fmtDate(iso: string | null): string {
 }
 
 /**
- * Coluna lateral do detalhe (v0.5): identidade do processo + saúde do plano,
- * sempre visível ao lado do Plano de Atividades. Sem estado e sem I/O: tudo
+ * Coluna lateral do Plano de Atividades: a saúde do plano, ao lado da lista.
+ *
+ * O card "Resumo da Oportunidade" (frequência, execuções, pessoas, área,
+ * gatilho, formato das entradas, dados sensíveis, sistemas) foi REMOVIDO: era
+ * a seção Processo Atual repetida numa coluna estreita, e nenhum daqueles
+ * campos ajuda a trabalhar na lista de tarefas ao lado. Ficam só progresso e
+ * próximas entregas, que são contexto de execução. Sem estado e sem I/O: tudo
  * aqui é leitura derivada do que a página já buscou (é montado dentro de
  * `OpportunityDetail`, que é `'use client'`, então roda no cliente — daí
  * `today` vir por prop em vez de `new Date()` aqui dentro).
  */
-export function SummarySidebar({ opportunity: o, tasks, today, opportunityId }: Props) {
-  const extras = o.formulario_extras ?? {};
+export function SummarySidebar({ tasks, today, opportunityId }: Props) {
   const summary = summarizeTasks(tasks, today);
   const proximas = nextDeliveries(tasks);
 
   return (
     <div className="flex flex-col gap-4">
-      <Card title="Resumo da Oportunidade">
-        <dl className="flex flex-col">
-          <Row label="Frequência de execução" value={o.frequencia} />
-          <Row label="Número de execuções" value={o.volume_medio} />
-          <Row label="Pessoas envolvidas" value={o.num_pessoas} />
-          <Row label="Área responsável" value={o.area} />
-          <Row label="Subárea / Time" value={o.subarea} />
-          <Row label="Gatilho (o que inicia)" value={labelOf(GATILHO_LABELS, extras.gatilho)} />
-          <Row
-            label="Formato das entradas"
-            value={labelOf(FORMATO_ENTRADA_LABELS, extras.formato_entrada)}
-          />
-          <Row
-            label="Dados sensíveis (LGPD)"
-            value={labelOf(DADOS_SENSIVEIS_LABELS, extras.dados_sensiveis)}
-          />
-          <Row label="Status atual">
-            <StatusBadge status={o.status} />
-          </Row>
-          <Row label="Sistemas utilizados" value={extras.sistemas} />
-        </dl>
-      </Card>
-
       <Card title="Resumo do progresso">
         {summary.total === 0 ? (
           <p className="text-[12px] text-mut">Nenhuma tarefa cadastrada ainda.</p>
@@ -155,28 +128,6 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
       <h2 className="text-[13px] font-bold text-txt mb-2.5">{title}</h2>
       {children}
     </section>
-  );
-}
-
-function Row({
-  label,
-  value,
-  children,
-}: {
-  label: string;
-  value?: string | null;
-  children?: React.ReactNode;
-}) {
-  const empty = !value || value.trim() === '' || value === '–';
-  if (empty && !children) return null;
-
-  return (
-    <div className="flex items-start justify-between gap-3 py-1.5 border-b border-bdr/60 last:border-b-0">
-      <dt className="text-[11px] text-mut flex-shrink-0">{label}</dt>
-      <dd className="text-[12px] font-semibold text-txt text-right min-w-0 break-words">
-        {children ?? value}
-      </dd>
-    </div>
   );
 }
 

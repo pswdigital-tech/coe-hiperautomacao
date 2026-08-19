@@ -562,6 +562,9 @@ export async function createOpportunity(
       complexidade: data.complexidade,
       tempo: data.tempo,
       objetivo: data.objetivo,
+      objetivo_projeto: data.objetivo_projeto || null, // 0061
+      fora_escopo: data.fora_escopo ?? [],
+      criterios_aceite: data.criterios_aceite ?? [],
       status: data.status,
       responsavel: data.responsavel || null,
       notas: data.notas || null,
@@ -709,6 +712,9 @@ export async function updateOpportunity(
       complexidade: data.complexidade,
       tempo: data.tempo,
       objetivo: data.objetivo,
+      objetivo_projeto: data.objetivo_projeto || null, // 0061
+      fora_escopo: data.fora_escopo ?? [],
+      criterios_aceite: data.criterios_aceite ?? [],
       responsavel: data.responsavel || null,
       notas: data.notas || null,
       observacao: data.observacao || null,

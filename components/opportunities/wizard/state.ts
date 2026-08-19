@@ -178,6 +178,15 @@ export function opportunityToFormData(opp: Opportunity): WizardFormData {
     complexidade: opp.complexidade ?? 'medio',
     tempo: opp.tempo ?? undefined,
     objetivo: opp.objetivo ?? 3,
+    objetivo_projeto: opp.objetivo_projeto ?? '',
+    // 0062 — arrays da Solução: `['']` quando vazio para o DynamicList abrir
+    // com uma linha em branco, mesma convenção de escopo_automacao acima.
+    fora_escopo:
+      opp.fora_escopo && opp.fora_escopo.length > 0 ? opp.fora_escopo : [''],
+    criterios_aceite:
+      opp.criterios_aceite && opp.criterios_aceite.length > 0
+        ? opp.criterios_aceite
+        : [''],
     status: opp.status,
     responsavel: opp.responsavel ?? '',
     notas: opp.notas ?? '',

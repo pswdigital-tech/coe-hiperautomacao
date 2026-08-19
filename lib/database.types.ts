@@ -649,6 +649,16 @@ export type Database = {
           complexidade: ComplexityLevel | null;
           tempo: FrequencyBucket | null;
           objetivo: number | null;
+          /** 0061 — objetivo do projeto em linguagem de negócio (texto livre,
+           *  Visão Geral). NÃO confundir com `objetivo` acima, que é o smallint
+           *  1..5 de alinhamento estratégico usado no score. */
+          objetivo_projeto: string | null;
+          /** 0062 — campos da seção Solução. `objetivo_solucao` existiu entre
+           *  a 0062 e a 0063 e foi REMOVIDO: "objetivo da solução" e "objetivo
+           *  do projeto" são a mesma coisa, e a fonte única é
+           *  `objetivo_projeto` acima, exibido nas duas seções. */
+          fora_escopo: string[];
+          criterios_aceite: string[];
           status: OpportunityStatus;
           responsavel: string | null;
           notas: string | null;
@@ -718,6 +728,9 @@ export type Database = {
           complexidade?: ComplexityLevel | null;
           tempo?: FrequencyBucket | null;
           objetivo?: number | null;
+          objetivo_projeto?: string | null; // 0061
+          fora_escopo?: string[]; // 0062
+          criterios_aceite?: string[]; // 0062
           status?: OpportunityStatus;
           responsavel?: string | null;
           notas?: string | null;

@@ -20,6 +20,42 @@
 //   priority_level: alta >=70 / media 40–69 / baixa <40
 // =============================================================================
 
+/**
+ * O que cada bloco do score MEDE, em português de quem lê a tela — não em
+ * termos da fórmula. Fonte única: a Visão Geral e a aba Score mostram o mesmo
+ * texto, e mudar a explicação num lugar muda nos dois.
+ *
+ * Existe porque "Fatores 50% · 71" não significa nada para quem não conhece o
+ * modelo de pontuação, que é justamente o público da Visão Geral.
+ */
+export const SCORE_BLOCK_INFO: Record<
+  'fatores' | 'beneficios' | 'criterios',
+  { label: string; peso: string; explica: string }
+> = {
+  fatores: {
+    label: 'Fatores',
+    peso: '50%',
+    explica:
+      'Cinco atributos do projeto, valendo até 20 pontos cada: esforço de implementação, complexidade, frequência de execução, alinhamento estratégico e impacto em horas (FTE). Menor esforço e menor complexidade pontuam MAIS — são mais fáceis de entregar.',
+  },
+  beneficios: {
+    label: 'Benefícios',
+    peso: '30%',
+    explica:
+      'As 8 dimensões de benefício pontuadas de 1 a 5 na aba Benefícios: redução de tempo, eliminação de erros, produtividade, qualidade de dados, redução de custos, redução de retrabalho, compliance e objetivos estratégicos.',
+  },
+  criterios: {
+    label: 'Critérios',
+    peso: '20%',
+    explica:
+      'As 8 perguntas de aderência à automação respondidas na aba Critérios (regras claras, processo manual, padronização de documentos, entre outras). Conta quantas foram respondidas de forma FAVORÁVEL à automação.',
+  },
+};
+
+/** Nota comum aos dois consumidores — o comportamento de bloco ausente. */
+export const SCORE_RENORMALIZE_NOTE =
+  'Blocos não informados saem do cálculo e os pesos dos demais são renormalizados.';
+
 export interface Prioridade {
   esforco?: string;
   complexidade?: string;

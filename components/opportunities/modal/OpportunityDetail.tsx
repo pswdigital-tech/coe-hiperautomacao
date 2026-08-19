@@ -30,18 +30,14 @@ import { deriveRpaScore } from '@/lib/opportunities/rpa';
 import { DetailHeader } from '@/components/opportunities/detail/DetailHeader';
 import { SummarySidebar } from '@/components/opportunities/detail/SummarySidebar';
 import { TasksPanel } from '@/components/opportunities/detail/TasksPanel';
+import { VisaoGeralPanel } from '@/components/opportunities/detail/VisaoGeralPanel';
+import type { OverviewTarget } from '@/lib/opportunities/overview';
 import { TabsNav } from './TabsNav';
 import type { TabDef, TabId } from './types';
-import { AutomacaoTab } from './tabs/AutomacaoTab';
+import { SolucaoTab } from './tabs/SolucaoTab';
 import { FasesTab } from './tabs/FasesTab';
-import { ScoreTab } from './tabs/ScoreTab';
-import { ProcessoTab } from './tabs/ProcessoTab';
-import { CriteriosTab } from './tabs/CriteriosTab';
-import { BeneficiosTab } from './tabs/BeneficiosTab';
-import { ObservacaoTab } from './tabs/ObservacaoTab';
-import { RiscoTab } from './tabs/RiscoTab';
-import { DocumentosTab } from './tabs/DocumentosTab';
-import { HistoricoTab } from './tabs/HistoricoTab';
+import { ProcessoAtualTab } from './tabs/ProcessoAtualTab';
+import { GovernancaTab, type GovernancaSub } from './tabs/GovernancaTab';
 import { TextField, SelectField } from '@/components/opportunities/wizard/steps/fields';
 import { CriteriosStep } from '@/components/opportunities/wizard/steps/CriteriosStep';
 import { BeneficiosStep } from '@/components/opportunities/wizard/steps/BeneficiosStep';
@@ -57,18 +53,18 @@ import { DynamicList } from '@/components/opportunities/wizard/steps/DynamicList
 // é o conteúdo mais consultado do detalhe e custava um clique + uma navegação
 // (o antigo card "Ver tarefas →") para ser alcançado.
 const MODAL_TABS: TabDef[] = [
+  // 0061 — painel executivo. Entra ANTES do Plano porque é a resposta de quem
+  // só quer saber como o projeto está; quem trabalha nele não perde nada,
+  // porque a aba inicial continua sendo o Plano para todo perfil que edita
+  // (ver `activeTab` abaixo).
+  { id: 'visao-geral', label: 'Visão Geral', icon: '🏠' },
   { id: 'tarefas', label: 'Plano de Atividades', icon: '🗂️' },
-  { id: 'processo', label: 'Processo', icon: '📋' },
-  { id: 'criterios', label: 'Critérios', icon: '✅' },
-  { id: 'automacao', label: 'Automação', icon: '🤖' },
-  { id: 'beneficios', label: 'Benefícios', icon: '📈' },
-  { id: 'score', label: 'Score', icon: '📊' },
-  { id: 'fases', label: 'Fases', icon: '📅' },
-  { id: 'risco', label: 'Risco', icon: '⚠️' },
-  { id: 'observacao', label: 'Observações', icon: '💬' },
-  // v0.3 — abas novas (documentos anexados + auditoria automática)
-  { id: 'documentos', label: 'Documentos', icon: '📎' },
-  { id: 'historico', label: 'Histórico', icon: '🕘' },
+  // Substitui "Fases": mesma edição de estimativa por dentro (FasesTab), mais
+  // o Gantt do projeto e os indicadores de prazo.
+  { id: 'cronograma', label: 'Cronograma', icon: '📅' },
+  { id: 'solucao', label: 'Solução', icon: '⚙️' },
+  { id: 'processo', label: 'Processo Atual', icon: '📋' },
+  { id: 'governanca', label: 'Governança', icon: '🛡️' },
 ];
 
 // Domínio de Frequência (fonte única do fator `tempo`, 0011). Espelha ProcessoStep.
@@ -144,7 +140,17 @@ export function OpportunityDetail({
   canAssign,
   canReprocessAi = false,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<TabId>('tarefas');
+  // Aba inicial POR PAPEL: o perfil somente-leitura (o cliente) abre na Visão
+  // Geral — é a única seção pensada para quem não trabalha na oportunidade
+  // todo dia. Quem edita continua caindo no Plano de Atividades, preservando o
+  // ganho deliberado da v0.5 (o Plano é o conteúdo mais consultado do detalhe).
+  const [activeTab, setActiveTab] = useState<TabId>(
+    readOnly ? 'visao-geral' : 'tarefas'
+  );
+  // Sub-item da Governança. Vive aqui, e não dentro dela, porque a Visão Geral
+  // navega direto para "riscos"/"histórico" — o alvo precisa ser ajustável de
+  // fora da seção.
+  const [govSub, setGovSub] = useState<GovernancaSub>('riscos');
 
   // ── Estado de edição global (recipe do WizardShell, D-12/D-13/D-15) ───────
   const router = useRouter();
@@ -237,10 +243,15 @@ export function OpportunityDetail({
     (form.criterios ?? null) as Record<string, string> | null
   );
 
-  // A aba de tarefas não passa por `renderTab`: ela não é conteúdo do payload
-  // de edição (D-12) e traz o seu próprio wrapper (toolbar + views + diálogo).
+  // Tarefas e Visão Geral não passam por `renderTab`: trazem o próprio wrapper
+  // (o Plano tem toolbar/views/diálogo; a Visão Geral é uma grade de cartões,
+  // não uma ficha dentro de um cartão branco).
   const tabContent =
-    activeTab === 'tarefas' ? null : renderTab({
+    activeTab === 'tarefas' ||
+    activeTab === 'visao-geral' ||
+    activeTab === 'governanca'
+      ? null
+      : renderTab({
     tab: activeTab,
     opp: opportunity,
     phases,
@@ -257,6 +268,28 @@ export function OpportunityDetail({
   });
 
   const isTarefas = activeTab === 'tarefas';
+  const isVisaoGeral = activeTab === 'visao-geral';
+  // Solução monta os próprios cartões (o conteúdo é heterogêneo demais para
+  // uma ficha única) — então NÃO entra na casca branca das abas de ficha, pelo
+  // mesmo motivo da Visão Geral: cartão dentro de cartão embaralha as
+  // fronteiras em vez de marcá-las.
+  // Solução e Processo Atual montam os próprios cartões (conteúdo heterogêneo
+  // demais para uma ficha única) — não entram na casca branca das abas de
+  // ficha: cartão dentro de cartão embaralha as fronteiras em vez de marcá-las.
+  const isSolucao = activeTab === 'solucao' || activeTab === 'processo';
+  const isGovernanca = activeTab === 'governanca';
+
+  // Alertas e "ver todos" da Visão Geral levam à aba dona do assunto — os
+  // alvos são abas que já existem, não rotas.
+  function goTo(target: OverviewTarget) {
+    // `risco` e `historico` deixaram de ser abas: são sub-itens da Governança.
+    if (target === 'risco' || target === 'historico') {
+      setGovSub(target === 'risco' ? 'riscos' : 'historico');
+      setActiveTab('governanca');
+      return;
+    }
+    setActiveTab(target as TabId);
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -289,13 +322,41 @@ export function OpportunityDetail({
           resumo ao lado seria ruído). */}
       <div className="flex flex-col xl:flex-row gap-4 items-start">
         <div className="flex-1 min-w-0 w-full">
-          {isTarefas ? (
+          {isVisaoGeral ? (
+            <VisaoGeralPanel
+              opportunity={opportunity}
+              tasks={tasks}
+              phases={phases}
+              risks={risks}
+              history={history}
+              today={today}
+              onNavigate={goTo}
+              editMode={editMode}
+              objetivoProjeto={form.objetivo_projeto ?? ''}
+              onObjetivoChange={(v) => patch({ objetivo_projeto: v })}
+            />
+          ) : isTarefas ? (
             <TasksPanel
               opportunityId={opportunity.id}
               tasks={tasks}
               assignableProfiles={taskAssignableProfiles}
               readOnly={readOnly}
             />
+          ) : isGovernanca ? (
+            <GovernancaTab
+              opportunity={opportunity}
+              risks={risks}
+              notes={notes}
+              documents={documents}
+              history={history}
+              tasks={tasks}
+              assignees={assignees}
+              sub={govSub}
+              onSubChange={setGovSub}
+              readOnly={readOnly}
+            />
+          ) : isSolucao ? (
+            tabContent
           ) : (
             <div className="bg-wh border border-bdr rounded-xl shadow-sm overflow-hidden min-h-[55vh]">
               {tabContent}
@@ -306,7 +367,6 @@ export function OpportunityDetail({
         {isTarefas && (
           <aside className="w-full xl:w-[340px] xl:shrink-0">
             <SummarySidebar
-              opportunity={opportunity}
               tasks={tasks}
               today={today}
               opportunityId={opportunity.id}
@@ -348,34 +408,20 @@ function renderTab(args: {
     readOnly,
   } = args;
 
-  // Fases, Risco, Documentos e Histórico têm sua própria interatividade (CRUD
-  // inline gated só por `readOnly`) — independem do fluxo global Editar/Salvar
-  // (D-12) e por isso NÃO fazem parte do payload de updateOpportunity.
-  if (tab === 'fases')
+  // Cronograma, Risco, Documentos e Histórico têm sua própria interatividade
+  // (CRUD inline gated só por `readOnly`) — independem do fluxo global
+  // Editar/Salvar (D-12) e por isso NÃO fazem parte do payload de
+  // updateOpportunity. "Cronograma" é a antiga aba "Fases", renomeada.
+  if (tab === 'cronograma')
     return <FasesTab opportunity={opp} phases={phases} readOnly={readOnly} />;
-  if (tab === 'risco')
-    return <RiscoTab opportunity={opp} risks={risks} readOnly={readOnly} />;
-  if (tab === 'documentos')
-    return (
-      <DocumentosTab opportunityId={opp.id} documents={documents} readOnly={readOnly} />
-    );
-  if (tab === 'historico') return <HistoricoTab history={history} />;
-  if (tab === 'observacao')
-    return <ObservacaoTab opportunity={opp} notes={notes} readOnly={readOnly} />;
 
   // ── Modo LEITURA: abas de display do Plan 04 (inalteradas) ────────────────
   if (!editMode) {
     switch (tab) {
       case 'processo':
-        return <ProcessoTab opportunity={opp} />;
-      case 'criterios':
-        return <CriteriosTab opportunity={opp} />;
-      case 'automacao':
-        return <AutomacaoTab opportunity={opp} />;
-      case 'beneficios':
-        return <BeneficiosTab opportunity={opp} />;
-      case 'score':
-        return <ScoreTab opportunity={opp} />;
+        return <ProcessoAtualTab opportunity={opp} />;
+      case 'solucao':
+        return <SolucaoTab opportunity={opp} />;
       default:
         return null;
     }
@@ -385,7 +431,7 @@ function renderTab(args: {
   switch (tab) {
     case 'processo':
       return (
-        <div className="px-5 py-4">
+        <div className="bg-wh border border-bdr rounded-xl shadow-sm px-5 py-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
             <TextField
               label="Processo"
@@ -452,77 +498,98 @@ function renderTab(args: {
             />
           </div>
 
-          <div className="mt-2 pt-3 border-t border-bdr">
+          {/* Os 8 critérios são o DIAGNÓSTICO deste processo — editam-se no
+              mesmo formulário, não numa aba à parte. */}
+          <div className="mt-4 pt-4 border-t border-bdr">
             <div className="text-[10px] font-bold uppercase tracking-wider text-mut mb-2">
-              Operacional (automação já implementada)
+              Diagnóstico de automação
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-              <TextField
-                label="Código Azure Boards"
-                value={form.azure_boards_codigo ?? ''}
-                onChange={(v) => patch({ azure_boards_codigo: v })}
-              />
-              <TextField
-                label="Linguagem"
-                value={form.linguagem ?? ''}
-                onChange={(v) => patch({ linguagem: v })}
-                placeholder="Ex: Python, VBA, Power Automate"
-              />
-              <TextField
-                label="Execução"
-                value={form.execucao ?? ''}
-                onChange={(v) => patch({ execucao: v })}
-                placeholder="Ex: VM, servidor"
-              />
-              <TextField
-                label="Usuários de Serviço"
-                value={form.usuarios_servico ?? ''}
-                onChange={(v) => patch({ usuarios_servico: v })}
-              />
-              <TextField
-                label="Data de Conclusão"
-                type="text"
-                value={form.data_conclusao ?? ''}
-                onChange={(v) => patch({ data_conclusao: v })}
-                placeholder="AAAA-MM-DD"
-              />
+            <CriteriosStep data={form} onChange={patch} errors={errors} />
+          </div>
+
+          {/* Os 5 fatores de priorização fecham a avaliação: critérios dizem se
+              dá para automatizar, os fatores dizem em que ordem entra. Score e
+              faixa continuam DISPLAY-only — nunca inputs (D-15). */}
+          <div className="mt-4 pt-4 border-t border-bdr">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-mut mb-2">
+              Fatores de priorização
             </div>
+            <PriorizacaoStep data={form} onChange={patch} errors={errors} />
           </div>
         </div>
       );
-    case 'criterios':
-      return <CriteriosStep data={form} onChange={patch} errors={errors} />;
-    case 'beneficios':
-      return <BeneficiosStep data={form} onChange={patch} />;
-    case 'score':
-      // PriorizacaoStep: 4 fatores manuais + bucket FTE read-only + ScorePreview
-      // (o score/priority são DISPLAY-only — nunca inputs, D-15).
-      return <PriorizacaoStep data={form} onChange={patch} errors={errors} />;
-    case 'automacao':
+    case 'solucao':
       return (
-        <div className="px-5 py-4 space-y-5">
-          {/* 0055 — multi-seleção sobre o catálogo `automation_tools`, no lugar
-              do select único de rpa/n8n/ambos. 'Ambos' saiu: marcar RPA e n8n
-              diz o mesmo sem ambiguidade. */}
+        <div className="bg-wh border border-bdr rounded-xl shadow-sm px-5 py-4 space-y-5">
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-mut mb-2">
+              Objetivo do Projeto
+            </div>
+            {/* MESMO campo editado na Visão Geral: um só `objetivo_projeto`,
+                dois lugares de edição, zero chance de divergirem. */}
+            <textarea
+              value={form.objetivo_projeto ?? ''}
+              onChange={(e) => patch({ objetivo_projeto: e.target.value })}
+              rows={4}
+              maxLength={2000}
+              placeholder="Para que este projeto existe e o que a automação faz, em linguagem de negócio."
+              className="w-full px-3 py-2 border border-bdr rounded-lg text-[13px] bg-bg text-txt leading-relaxed"
+            />
+            <p className="text-[10px] text-mut mt-1">
+              O mesmo texto aparece na Visão Geral.
+            </p>
+          </div>
+
+          {/* 0055 — multi-seleção sobre o catálogo `automation_tools`. */}
           <ToolPicker
             value={form.ferramentas ?? []}
             onChange={(next) => patch({ ferramentas: next })}
             opportunityId={opp.id}
           />
 
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-mut mb-2">
-              Escopo do Projeto
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-mut mb-2">
+                Escopo do Projeto
+              </div>
+              <DynamicList
+                items={form.escopo_automacao ?? ['']}
+                onChange={(next) => patch({ escopo_automacao: next })}
+                placeholder="Ex: Geração automática de relatório X"
+                addLabel="+ Adicionar item ao escopo"
+              />
             </div>
-            <DynamicList
-              items={form.escopo_automacao ?? ['']}
-              onChange={(next) => patch({ escopo_automacao: next })}
-              placeholder="Ex: Geração automática de relatório X"
-              addLabel="+ Adicionar item ao escopo"
-            />
+
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-mut mb-2">
+                Fora do Escopo
+              </div>
+              <DynamicList
+                items={form.fora_escopo ?? ['']}
+                onChange={(next) => patch({ fora_escopo: next })}
+                placeholder="Ex: Integração com o sistema legado Y"
+                addLabel="+ Adicionar exclusão"
+              />
+            </div>
           </div>
 
           <div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-mut mb-2">
+              Critérios de Aceite
+            </div>
+            <DynamicList
+              items={form.criterios_aceite ?? ['']}
+              onChange={(next) => patch({ criterios_aceite: next })}
+              placeholder="Ex: Relatório gerado em até 5 minutos"
+              addLabel="+ Adicionar critério"
+            />
+          </div>
+
+          {/* Benefícios: a pontuação das 8 dimensões e o texto livre ficam
+              JUNTOS, no mesmo lugar em que são exibidos. Antes a lista era
+              editada aqui e mostrada na aba Benefícios — display e edição em
+              telas diferentes é como um dos dois envelhece sem ninguém notar. */}
+          <div className="pt-3 border-t border-bdr">
             <div className="text-[10px] font-bold uppercase tracking-wider text-mut mb-2">
               Benefícios Esperados
             </div>
@@ -533,6 +600,9 @@ function renderTab(args: {
               addLabel="+ Adicionar benefício"
             />
           </div>
+
+          <BeneficiosStep data={form} onChange={patch} />
+
         </div>
       );
     default:

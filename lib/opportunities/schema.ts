@@ -233,6 +233,28 @@ const baseSchema = z.object({
   complexidade: complexityEnum.optional(),
   tempo: frequencyEnum.optional(),
   objetivo: z.number().int().min(1).max(5).optional(),
+  // 0061 — TEXTO do objetivo do projeto. Campo distinto de `objetivo` acima
+  // (smallint 1..5 de alinhamento estratégico, fator do score): mesmo radical
+  // no nome, naturezas diferentes.
+  objetivo_projeto: z
+    .string()
+    .max(2000, 'Máximo 2000 caracteres')
+    .optional()
+    .or(z.literal('')),
+  // 0062 — Solução. Os dois arrays espelham escopo_automacao (200 chars por
+  // item, 20 itens): mesmos limites, mesma proteção contra payload inflado.
+  // `objetivo_solucao` NÃO existe (removido na 0063): o objetivo é um só,
+  // `objetivo_projeto`, exibido tanto na Visão Geral quanto na Solução.
+  fora_escopo: z
+    .array(z.string().max(200, 'Item excede 200 caracteres'))
+    .max(20, 'Máximo 20 itens')
+    .optional()
+    .default([]),
+  criterios_aceite: z
+    .array(z.string().max(200, 'Item excede 200 caracteres'))
+    .max(20, 'Máximo 20 itens')
+    .optional()
+    .default([]),
   status: statusEnum.default('novo'),
   responsavel: z
     .string()

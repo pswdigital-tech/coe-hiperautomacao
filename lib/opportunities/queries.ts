@@ -37,6 +37,12 @@ const OPPORTUNITY_COLUMNS =
   // consumidores legados (mix do relatório) e é derivada no banco.
   'ferramenta, ferramentas, escopo_automacao, beneficios_esperados, ' +
   'esforco, complexidade, tempo, objetivo, ' +
+  // 0061 — texto do objetivo do projeto (Visão Geral). Decisão explícita
+  // (HARDEN-E-06): conteúdo editorial, nada sensível.
+  'objetivo_projeto, ' +
+  // 0062 — campos da seção Solução. Decisão explícita (HARDEN-E-06):
+  // conteúdo editorial do projeto, nada sensível.
+  'fora_escopo, criterios_aceite, ' +
   'status, responsavel, notas, observacao, risco, ' +
   // v0.2 (0011) — incluídos por decisão explícita (HARDEN-E-06): consumidos por
   // P11/P12/P13/P14; nenhum sensível. rpa_score é GENERATED (leitura).
