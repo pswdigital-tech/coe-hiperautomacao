@@ -70,6 +70,11 @@ function opportunityLabel(o: { processo: string | null; seq_id: number | null } 
   return (o.processo || '').trim() || (o.seq_id != null ? `#${o.seq_id}` : 'Oportunidade');
 }
 
+/** Quantos nomes de empresa cabem no resumo antes de virar "+N". O resto
+ *  continua visível ao expandir a linha — que é onde a lista completa (com
+ *  revogar) sempre esteve. */
+const MAX_TENANT_CHIPS = 4;
+
 function pluralize(n: number, singular: string, plural: string): string {
   return n === 1 ? `${n} ${singular}` : `${n} ${plural}`;
 }
@@ -177,15 +182,18 @@ export default async function StaffAdminPage() {
         .sort((a, b) => personLabel(a).localeCompare(personLabel(b), 'pt-BR'));
 
   return (
-    <div className="px-6 py-6 max-w-4xl mx-auto flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+    <div className="px-6 lg:px-8 py-6 flex flex-col gap-6">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-lg font-bold text-txt">Staff PSW como admin de tenant</h1>
-          <p className="text-xs text-mut">
+          <p className="text-xs text-mut mt-0.5">
             Conceda e revogue admin de empresa para pessoas da PSW.
           </p>
         </div>
-        <Link href="/opportunities" className="text-xs font-bold text-pri hover:underline">
+        <Link
+          href="/opportunities"
+          className="text-xs font-semibold text-pri hover:underline shrink-0"
+        >
           ← Voltar
         </Link>
       </div>
@@ -216,148 +224,197 @@ export default async function StaffAdminPage() {
       )}
 
       {!readFailed && (
-        <div className="bg-wh rounded-xl border border-bdr overflow-hidden">
-          <div className="bg-bg text-left text-[11px] uppercase tracking-wide text-mut flex items-center">
-            <span className="px-4 py-2.5 font-bold flex-1">Pessoa</span>
-            <span className="px-4 py-2.5 font-bold w-56">Admin nas empresas</span>
-            <span className="px-4 py-2.5 font-bold w-40">Atribuições individuais</span>
-            <span className="px-4 py-2.5 font-bold w-10 text-right">Ação</span>
-          </div>
-
-          {people.length === 0 ? (
-            <div className="px-4 py-8 text-center text-mut text-sm">
-              Nenhum staff PSW cadastrado ainda.
-              <br />
-              <span className="text-xs">
-                Convide uma pessoa em{' '}
-                <Link href="/admin/invites" className="text-pri hover:underline">
-                  Convites de acesso
-                </Link>{' '}
-                primeiro — depois volte aqui para conceder admin de empresa.
+        <section className="flex flex-col gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-bold text-txt">Pessoas da PSW</h2>
+              <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-bg border border-bdr text-[11px] font-bold text-mut">
+                {people.length}
               </span>
             </div>
-          ) : (
-            people.map((person) => {
-              const isEmpty = person.grants.length === 0 && person.assignments.length === 0;
-              return (
-                <details
-                  key={person.id}
-                  className={`group border-t border-slate-100 dark:border-slate-800 ${
-                    person.isOrphan ? 'opacity-60' : ''
-                  }`}
-                >
-                  <summary className="flex items-center cursor-pointer list-none select-none">
-                    <span
-                      className="px-4 py-2.5 flex-1 text-sm text-txt truncate"
-                      title={`${personLabel(person)} · ${person.email}`}
-                    >
-                      {personLabel(person)}
-                      {person.isOrphan && (
-                        <span className="ml-2 inline-flex items-center gap-1 text-[11px] font-bold text-mut bg-bg border border-bdr rounded-full px-2 py-0.5 align-middle">
-                          ⏸ Órfã — pessoa não é mais Staff PSW
-                        </span>
-                      )}
-                    </span>
-                    <span className="px-4 py-2.5 w-56 text-sm text-mut">
-                      {isEmpty
-                        ? 'Sem admin em nenhuma empresa e sem atribuições individuais.'
-                        : pluralize(person.grants.length, 'empresa', 'empresas')}
-                    </span>
-                    <span className="px-4 py-2.5 w-40 text-sm text-mut">
-                      {!isEmpty && pluralize(person.assignments.length, 'atrib.', 'atrib.')}
-                    </span>
-                    <span className="px-4 py-2.5 w-10 flex justify-end">
-                      <Icon.Chevron className="w-4 h-4 text-mut transition-transform group-open:rotate-180" />
-                    </span>
-                  </summary>
+            <p className="text-xs text-mut mt-0.5">
+              Clique numa linha para ver de onde vem cada acesso e revogar.
+            </p>
+          </div>
 
-                  <div className="px-4 pb-4 flex flex-col gap-3 bg-bg/40">
-                    {isEmpty && (
-                      <p className="text-xs text-mut pt-1">
-                        Sem admin em nenhuma empresa e sem atribuições individuais.
-                      </p>
-                    )}
+          <div className="bg-wh rounded-xl border border-bdr overflow-hidden">
+            {/* Quem CRESCE é "Admin nas empresas", não "Pessoa": com só 4
+                colunas curtas, deixar o nome absorver a folga jogava os dados
+                para a borda direita e abria um vazio no meio da linha. A
+                coluna das empresas tem conteúdo de verdade para ocupar o
+                espaço (os nomes), então é ela que ganha a largura. */}
+            <div className="bg-bg text-left text-[11px] uppercase tracking-wide text-mut flex items-center border-b border-bdr">
+              <span className="px-4 py-2.5 font-bold w-72 shrink-0">Pessoa</span>
+              <span className="px-4 py-2.5 font-bold flex-1 min-w-0">Admin nas empresas</span>
+              <span className="px-4 py-2.5 font-bold w-36 shrink-0">Atribuições</span>
+              {/* Sem rótulo visível: a coluna só abriga o chevron, e a palavra
+                  "Ação" não cabia nos 40px — sobrava para fora do card e o
+                  `overflow-hidden` cortava. Além disso era enganosa: revogar
+                  acontece no painel expandido, não aqui. */}
+              <span className="px-4 py-2.5 w-12 shrink-0">
+                <span className="sr-only">Expandir</span>
+              </span>
+            </div>
 
-                    <div className="bg-wh border border-bdr rounded-lg p-3 flex flex-col gap-2">
-                      <span className="text-[11px] font-bold uppercase tracking-wide text-mut">
-                        Admin nas empresas
+            {people.length === 0 ? (
+              <div className="px-4 py-8 text-center text-mut text-sm">
+                Nenhum staff PSW cadastrado ainda.
+                <br />
+                <span className="text-xs">
+                  Convide uma pessoa em{' '}
+                  <Link href="/admin/invites" className="text-pri hover:underline">
+                    Convites de acesso
+                  </Link>{' '}
+                  primeiro — depois volte aqui para conceder admin de empresa.
+                </span>
+              </div>
+            ) : (
+              people.map((person) => {
+                const isEmpty = person.grants.length === 0 && person.assignments.length === 0;
+                return (
+                  <details
+                    key={person.id}
+                    className={`group border-t border-slate-100 dark:border-slate-800 ${
+                      person.isOrphan ? 'opacity-60' : ''
+                    }`}
+                  >
+                    <summary className="flex items-center cursor-pointer list-none select-none">
+                      <span
+                        className="px-4 py-2.5 w-72 shrink-0 text-sm text-txt truncate"
+                        title={`${personLabel(person)} · ${person.email}`}
+                      >
+                        {personLabel(person)}
+                        {person.isOrphan && (
+                          <span className="ml-2 inline-flex items-center gap-1 text-[11px] font-bold text-mut bg-bg border border-bdr rounded-full px-2 py-0.5 align-middle">
+                            ⏸ Órfã — pessoa não é mais Staff PSW
+                          </span>
+                        )}
                       </span>
-                      {person.grants.length === 0 ? (
-                        <p className="text-xs text-mut">Não é admin de nenhuma empresa.</p>
-                      ) : (
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {person.grants.map((g) => (
-                            <span
-                              key={g.grantId}
-                              title={g.tenantName}
-                              className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full bg-bg border border-bdr text-[12px] text-txt max-w-[220px]"
-                            >
-                              <span className="truncate">{g.tenantName}</span>
-                              <RevokeGrantButton
-                                grantId={g.grantId}
-                                tenantName={g.tenantName}
-                                personName={personLabel(person)}
-                              />
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="bg-wh border border-bdr rounded-lg p-3 flex flex-col gap-2">
-                      <span className="text-[11px] font-bold uppercase tracking-wide text-mut">
-                        Atribuições individuais
-                        {person.assignments.length > 0 && (
+                      {/* Os NOMES das empresas, não a contagem: é o que a
+                          largura extra compra, e evita ter que expandir a
+                          linha só para descobrir de qual empresa se trata.
+                          Aqui os chips são só leitura — revogar continua
+                          sendo no painel, ao lado do nome. */}
+                      <span className="px-4 py-2.5 flex-1 min-w-0 flex items-center gap-1.5 overflow-hidden">
+                        {person.grants.length === 0 ? (
+                          <span className="text-sm text-mut">Nenhuma</span>
+                        ) : (
                           <>
-                            {' '}
-                            {person.assignments.length}
-                            {person.redundantCount > 0 && (
-                              <>
-                                {' '}
-                                (
-                                {pluralize(person.redundantCount, 'redundante', 'redundantes')}
-                                )
-                              </>
+                            {person.grants.slice(0, MAX_TENANT_CHIPS).map((g) => (
+                              <span
+                                key={g.grantId}
+                                title={g.tenantName}
+                                className="shrink-0 max-w-[200px] truncate px-2 py-0.5 rounded-full bg-bg border border-bdr text-[12px] text-txt"
+                              >
+                                {g.tenantName}
+                              </span>
+                            ))}
+                            {person.grants.length > MAX_TENANT_CHIPS && (
+                              <span className="shrink-0 text-[11px] font-semibold text-mut">
+                                +{person.grants.length - MAX_TENANT_CHIPS}
+                              </span>
                             )}
                           </>
                         )}
                       </span>
-                      {person.assignments.length === 0 ? (
-                        <p className="text-xs text-mut">Nenhuma atribuição individual.</p>
-                      ) : (
-                        <ul className="flex flex-col gap-1">
-                          {person.assignments.map((a) => (
-                            <li
-                              key={a.opportunityId}
-                              className="flex items-center justify-between gap-2 text-sm text-txt"
-                            >
-                              <span className="flex items-center gap-2 min-w-0">
-                                <span className="truncate max-w-[280px]" title={a.label}>
-                                  {a.label}
-                                </span>
-                                {a.redundant && (
-                                  <span className="text-[11px] text-mut shrink-0">
-                                    já coberta pelo admin
-                                  </span>
-                                )}
-                              </span>
-                              <Link
-                                href={`/opportunities/${a.opportunityId}`}
-                                className="text-xs font-bold text-pri hover:underline shrink-0"
-                              >
-                                Ver oportunidade →
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
+                      <span className="px-4 py-2.5 w-36 shrink-0 text-sm text-mut truncate">
+                        {person.assignments.length === 0
+                          ? 'Nenhuma'
+                          : pluralize(person.assignments.length, 'atrib.', 'atrib.')}
+                      </span>
+                      <span className="px-4 py-2.5 w-12 shrink-0 flex justify-end">
+                        <Icon.Chevron className="w-4 h-4 text-mut transition-transform group-open:rotate-180" />
+                      </span>
+                    </summary>
+
+                    <div className="px-4 pb-4 flex flex-col gap-3 bg-bg/40">
+                      {isEmpty && (
+                        <p className="text-xs text-mut pt-1">
+                          Sem admin em nenhuma empresa e sem atribuições individuais.
+                        </p>
                       )}
+
+                      <div className="bg-wh border border-bdr rounded-lg p-3 flex flex-col gap-2">
+                        <span className="text-[11px] font-bold uppercase tracking-wide text-mut">
+                          Admin nas empresas
+                        </span>
+                        {person.grants.length === 0 ? (
+                          <p className="text-xs text-mut">Não é admin de nenhuma empresa.</p>
+                        ) : (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {person.grants.map((g) => (
+                              <span
+                                key={g.grantId}
+                                title={g.tenantName}
+                                className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full bg-bg border border-bdr text-[12px] text-txt max-w-[220px]"
+                              >
+                                <span className="truncate">{g.tenantName}</span>
+                                <RevokeGrantButton
+                                  grantId={g.grantId}
+                                  tenantName={g.tenantName}
+                                  personName={personLabel(person)}
+                                />
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="bg-wh border border-bdr rounded-lg p-3 flex flex-col gap-2">
+                        <span className="text-[11px] font-bold uppercase tracking-wide text-mut">
+                          Atribuições individuais
+                          {person.assignments.length > 0 && (
+                            <>
+                              {' '}
+                              {person.assignments.length}
+                              {person.redundantCount > 0 && (
+                                <>
+                                  {' '}
+                                  (
+                                  {pluralize(person.redundantCount, 'redundante', 'redundantes')}
+                                  )
+                                </>
+                              )}
+                            </>
+                          )}
+                        </span>
+                        {person.assignments.length === 0 ? (
+                          <p className="text-xs text-mut">Nenhuma atribuição individual.</p>
+                        ) : (
+                          <ul className="flex flex-col gap-1">
+                            {person.assignments.map((a) => (
+                              <li
+                                key={a.opportunityId}
+                                className="flex items-center justify-between gap-2 text-sm text-txt"
+                              >
+                                <span className="flex items-center gap-2 min-w-0">
+                                  <span className="truncate max-w-[280px]" title={a.label}>
+                                    {a.label}
+                                  </span>
+                                  {a.redundant && (
+                                    <span className="text-[11px] text-mut shrink-0">
+                                      já coberta pelo admin
+                                    </span>
+                                  )}
+                                </span>
+                                <Link
+                                  href={`/opportunities/${a.opportunityId}`}
+                                  className="text-xs font-bold text-pri hover:underline shrink-0"
+                                >
+                                  Ver oportunidade →
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </details>
-              );
-            })
-          )}
-        </div>
+                  </details>
+                );
+              })
+            )}
+          </div>
+        </section>
       )}
     </div>
   );

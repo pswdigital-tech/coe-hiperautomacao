@@ -1234,6 +1234,17 @@ export type Database = {
         Args: { p_tenant_id: string; p_payload: Json };
         Returns: string;
       };
+      // 0064 — troca de papel de uma pessoa (Membro/Leitor/Admin da empresa).
+      // `security definer` de propósito: `profiles` só tem `profiles_update_self`
+      // (0001) como policy de UPDATE, e a 0053 registrou por que ela nunca foi
+      // alargada — abrir UPDATE de `profiles` para terceiros deixaria gravar
+      // `role`, que é escalação de privilégio. Toda a autorização vive DENTRO da
+      // função (só platform_admin, só os 3 papéis de cliente, nunca a própria
+      // linha); os erros voltam como exceção com mensagem pt-BR já exibível.
+      set_profile_role: {
+        Args: { p_profile_id: string; p_role: string };
+        Returns: string;
+      };
       // 0059 — importação em massa. `import_writable_tenant_ids` é a fonte
       // única do "onde posso importar" (alimenta o seletor da tela E a
       // autorização dentro de `import_opportunities`). Conjunto MENOR que o de

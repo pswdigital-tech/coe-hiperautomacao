@@ -63,9 +63,14 @@ export function GrantForm({ people, tenants, grantedTenantIdsByPerson }: Props) 
     });
   }
 
+  // Mesmas classes do InviteForm — este form já era "modelado em InviteForm"
+  // (cabeçalho do arquivo), então acompanha o passe de UI daquela tela.
   const inputCls =
-    'mt-1 w-full px-3 py-2 border border-bdr rounded-lg text-sm bg-wh focus:outline-none focus:border-pril focus:ring-2 focus:ring-pril/20 disabled:opacity-50';
-  const labelCls = 'text-xs font-bold uppercase tracking-wide text-mut';
+    'w-full h-10 px-3 border border-bdr rounded-lg text-sm bg-wh text-txt focus:outline-none focus:border-pril focus:ring-2 focus:ring-pril/20 disabled:opacity-50 transition-colors';
+  const labelCls = 'text-[11px] font-bold uppercase tracking-wide text-mut';
+  /** Faixa do rótulo com altura fixa, para os dois selects ficarem na mesma
+   *  linha de base mesmo quando um deles ganhar um controle no rótulo. */
+  const labelRowCls = 'h-8 flex items-center justify-between gap-3';
 
   const canSubmit = personId !== '' && tenantId !== '' && !personIsFullyGranted;
 
@@ -73,14 +78,22 @@ export function GrantForm({ people, tenants, grantedTenantIdsByPerson }: Props) 
     <form
       id="grant-form"
       action={onSubmit}
-      className="bg-wh rounded-xl border border-bdr p-5 flex flex-col gap-4"
+      className="bg-wh rounded-xl border border-bdr overflow-hidden"
     >
-      <h2 className="text-sm font-bold text-txt">Conceder acesso de admin</h2>
+      <div className="px-5 py-3.5 border-b border-bdr bg-bg/60">
+        <h2 className="text-sm font-bold text-txt">Conceder acesso de admin</h2>
+        <p className="text-xs text-mut mt-0.5">
+          A pessoa passa a administrar a empresa escolhida, sem deixar de ser Staff PSW.
+        </p>
+      </div>
 
+      <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4 items-start">
       <div>
-        <label htmlFor="grant-person" className={labelCls}>
-          Pessoa
-        </label>
+        <div className={labelRowCls}>
+          <label htmlFor="grant-person" className={labelCls}>
+            Pessoa
+          </label>
+        </div>
         <select
           id="grant-person"
           name="profile_id"
@@ -99,9 +112,11 @@ export function GrantForm({ people, tenants, grantedTenantIdsByPerson }: Props) 
       </div>
 
       <div>
-        <label htmlFor="grant-tenant" className={labelCls}>
-          Empresa
-        </label>
+        <div className={labelRowCls}>
+          <label htmlFor="grant-tenant" className={labelCls}>
+            Empresa
+          </label>
+        </div>
         <select
           id="grant-tenant"
           name="tenant_id"
@@ -129,19 +144,22 @@ export function GrantForm({ people, tenants, grantedTenantIdsByPerson }: Props) 
       {error && (
         <div
           role="alert"
-          className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 dark:text-red-300 dark:bg-red-950/40 dark:border-red-800"
+          className="md:col-span-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 dark:text-red-300 dark:bg-red-950/40 dark:border-red-800"
         >
           {error}
         </div>
       )}
+      </div>
 
-      <button
-        type="submit"
-        disabled={!canSubmit || pending}
-        className="py-2.5 bg-pri hover:bg-pril text-white text-sm font-bold rounded-lg disabled:opacity-50 transition-colors"
-      >
-        {pending ? 'Concedendo...' : 'Conceder acesso de admin'}
-      </button>
+      <div className="px-5 py-3.5 border-t border-bdr bg-bg/60 flex justify-end">
+        <button
+          type="submit"
+          disabled={!canSubmit || pending}
+          className="h-10 px-5 bg-pri hover:bg-pril text-white text-sm font-semibold rounded-lg disabled:opacity-50 transition-colors"
+        >
+          {pending ? 'Concedendo...' : 'Conceder acesso de admin'}
+        </button>
+      </div>
     </form>
   );
 }

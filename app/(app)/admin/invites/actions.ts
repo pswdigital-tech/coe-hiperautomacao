@@ -212,3 +212,101 @@ export async function revokeInvite(formData: FormData): Promise<void> {
 
   revalidatePath('/admin/invites');
 }
+
+/**
+ * Troca o papel de uma pessoa entre os três papéis de CLIENTE (Membro, Leitor,
+ * Admin da empresa) — pedido do PO (2026-08-19), lista "Pessoas com conta".
+ *
+ * A escrita NÃO é um update direto: `profiles` só tem `profiles_update_self`
+ * (0001) como policy de UPDATE, e a 0053 documentou por que ela nunca foi
+ * alargada. Quem grava é a RPC `set_profile_role` (0064), security definer,
+ * que carrega TODAS as invariantes (só platform_admin; só member/viewer/
+ * tenant_admin, tanto no papel novo quanto no atual; nunca a própria linha).
+ * O guard abaixo é defesa em profundidade — falha cedo e com a mesma mensagem
+ * dos outros erros de auth desta tela, sem round-trip ao banco.
+ */
+export async function setProfileRole(
+  formData: FormData
+): Promise<{ ok: true; role: string } | { error: string }> {
+  const profile = await getCurrentProfile();
+  if (!isPlatformAdmin(profile)) return { error: 'Acesso negado.' };
+
+  const profileId = String(formData.get('profile_id') ?? '').trim();
+  const role = String(formData.get('role') ?? '').trim();
+  if (!profileId) return { error: 'Pessoa inválida.' };
+  if (role !== 'member' && role !== 'viewer' && role !== 'tenant_admin') {
+    return { error: 'Papel inválido.' };
+  }
+  if (profileId === profile!.id) {
+    return { error: 'Você não pode alterar o seu próprio papel.' };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('set_profile_role', {
+    p_profile_id: profileId,
+    p_role: role,
+  });
+
+  // As exceções da 0064 já vêm em pt-BR e são exibíveis como estão.
+  if (error) return { error: error.message };
+
+  revalidatePath('/admin/invites');
+  return { ok: true, role: String(data ?? role) };
+}
+
+/**
+ * Troca o papel de um convite AINDA PENDENTE. Diferente de `setProfileRole`,
+ * aqui não é preciso RPC: `invited_emails` já tem `invited_emails_update_admin`
+ * (0022) — `for update using (is_platform_admin())` — então o próprio RLS é a
+ * barreira. As três checagens abaixo são regra de PRODUTO, não de permissão, e
+ * por isso vivem aqui (relidas do banco, nunca confiando no que a UI mandou):
+ *
+ *   • convite JÁ USADO não muda: depois do primeiro login quem manda é
+ *     `profiles.role` — o convite virou histórico. Editá-lo pareceria surtir
+ *     efeito e não surtiria nenhum; o caminho certo é a linha da pessoa em
+ *     "Pessoas com conta". Mesmo racional do recorte de visibilidade (0054).
+ *   • convite `psw_staff` não muda: o tenant dele foi derivado como o da PSW
+ *     (D-02/D-08). Virar 'member' faria a pessoa nascer como membro DA PSW, e
+ *     não de uma empresa cliente — provisionamento errado, em silêncio.
+ *   • papel novo restrito aos três de cliente, espelhando `set_profile_role`
+ *     (0064): 'psw_staff' é lotação e 'platform_admin' o topo da cadeia.
+ */
+export async function setInviteRole(
+  formData: FormData
+): Promise<{ ok: true; role: string } | { error: string }> {
+  const profile = await getCurrentProfile();
+  if (!isPlatformAdmin(profile)) return { error: 'Acesso negado.' };
+
+  const id = String(formData.get('invite_id') ?? '').trim();
+  const role = String(formData.get('role') ?? '').trim();
+  if (!id) return { error: 'Convite inválido.' };
+  if (role !== 'member' && role !== 'viewer' && role !== 'tenant_admin') {
+    return { error: 'Papel inválido.' };
+  }
+
+  const supabase = await createClient();
+  const { data: invite } = await supabase
+    .from('invited_emails')
+    .select('role, used_at')
+    .eq('id', id)
+    .single();
+
+  if (!invite) return { error: 'Convite não encontrado.' };
+  if (invite.used_at) {
+    return { error: 'Convite já usado — troque o papel na lista de pessoas.' };
+  }
+  if (invite.role === 'psw_staff') {
+    return { error: 'Convite de Staff PSW não muda de papel.' };
+  }
+
+  const { error } = await supabase
+    .from('invited_emails')
+    .update({ role })
+    .eq('id', id)
+    .is('used_at', null);
+
+  if (error) return { error: `Erro ao trocar o papel: ${error.message}` };
+
+  revalidatePath('/admin/invites');
+  return { ok: true, role };
+}
