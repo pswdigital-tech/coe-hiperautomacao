@@ -56,3 +56,6 @@ next-env.d.ts
 /.claude
 /.cursor
 /.idea
+
+# dumps da migração de banco (contêm dados de cliente)
+/scripts/db-migrate/dump/

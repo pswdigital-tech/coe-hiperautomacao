@@ -1,0 +1,4 @@
+# credenciais dos dois projetos
+.env
+# dumps: contêm dados de cliente e hashes de senha
+dump/
