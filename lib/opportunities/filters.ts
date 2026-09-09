@@ -80,6 +80,13 @@ export type OpportunityFilters = {
    *  lido direto da URL) para não virar um vetor de `tenant_id` arbitrário;
    *  quem popula este campo é a page, depois de resolver o slug. */
   tenant?: string;
+  /** Filtro de evento (0066) — `events.id` JÁ RESOLVIDOS pela page a partir
+   *  do slug em `?evento=` (mesma disciplina de `tenant`: a URL carrega o
+   *  slug legível, nunca o UUID, e este campo NÃO sai de `parseFilters`).
+   *  Array porque, sem empresa selecionada, o mesmo slug pode existir em mais
+   *  de uma empresa visível. Array VAZIO significa "slug não encontrado" e
+   *  produz lista vazia — nunca degrada para "todos os eventos". */
+  event?: string[];
   /** Tipo de solicitação (0008/0035) — Nova Oportunidade / Melhoria / Incidente /
    *  Treinamento. `duvidas_terceiros` continua no enum (histórico) mas saiu do
    *  formulário público, então não aparece no dropdown. */

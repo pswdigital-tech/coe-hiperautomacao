@@ -141,6 +141,12 @@ export async function createPublicOpportunity(
   tenantSlug: string,
   input: PublicSubmitInput,
   turnstileToken: string,
+  /**
+   * 0066 — slug do evento da URL (`/r/<empresa>/<evento>`). Resolvido e
+   * validado DENTRO da RPC (existe na empresa, não é o padrão, está ativo).
+   * null/ausente = link geral `/r/<empresa>` → evento padrão pelo trigger.
+   */
+  eventSlug: string | null = null,
 ): Promise<CreatePublicResult> {
   // 1. IP + user-agent
   const ip = await getClientIp();
@@ -270,6 +276,8 @@ export async function createPublicOpportunity(
     p_execucoes_mes: input.execucoes_mes ?? null,
     // 0035 — validado contra o tenant dentro da RPC.
     p_parent_opportunity_id: input.parent_opportunity_id ?? null,
+    // 0066 — idem: a RPC recusa evento inexistente/encerrado.
+    p_event_slug: eventSlug || null,
   });
 
   // 7. Erro: log mensagem REAL no DB, mensagem GENÉRICA ao cliente (Falha Segura)
@@ -342,6 +350,9 @@ export async function createPublicOpportunity(
 export type StaffSubmitInput = Omit<PublicSubmitInput, 'email'> & {
   /** Opcional aqui (obrigatório no público): quem registra é o próprio CoE. */
   email?: string;
+  /** 0066 — evento escolhido na tela; null = "Registro avulso" (padrão). A RPC
+   *  valida que o evento é da empresa-alvo. */
+  event_id?: string | null;
 };
 
 /**
@@ -402,6 +413,7 @@ export async function createStaffOpportunity(
     objetivo: input.objetivo,
     request_type: input.request_type ?? 'nova_oportunidade',
     parent_opportunity_id: input.parent_opportunity_id ?? null,
+    event_id: input.event_id ?? null,
     criterios: input.criterios ?? null,
     beneficios: input.beneficios ?? null,
     fte_horas: input.fte_horas ?? null,
@@ -543,6 +555,9 @@ export async function createOpportunity(
       tenant_id: profile.tenant_id,
       source: data.source,
       request_type: data.request_type,
+      // 0066 — omitido quando não escolhido: o trigger grava o evento padrão.
+      // Evento de outra empresa é recusado no banco (check_violation).
+      ...(data.event_id ? { event_id: data.event_id } : {}),
       solicitante: data.solicitante,
       email: data.email || null,
       area: data.area,

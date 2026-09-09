@@ -178,6 +178,10 @@ const baseSchema = z.object({
     .min(3, 'Processo obrigatório')
     .max(2000, 'Máximo 2000 caracteres'),
   request_type: requestTypeEnum.default('nova_oportunidade'),
+  // 0066 — evento em que foi levantada. Opcional: ausente/null = o trigger
+  // `resolve_opportunity_event()` grava o evento padrão da empresa. O banco
+  // recusa evento de OUTRA empresa (check_violation), então aqui só o formato.
+  event_id: z.uuid('Evento inválido').nullable().optional(),
   frequencia: z
     .string()
     .max(60, 'Máximo 60 caracteres')

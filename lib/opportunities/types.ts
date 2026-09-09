@@ -42,6 +42,7 @@ export type OpportunityListItem = Pick<
   | 'criticidade'
   | 'created_at'
   | 'priority_tag'
+  | 'event_id'
   | 'score'
   | 'priority_level'
 >;

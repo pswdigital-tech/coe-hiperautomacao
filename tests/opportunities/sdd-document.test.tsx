@@ -34,6 +34,7 @@ function minimalOpportunity(): Opportunity {
     source: 'formulario',
     request_type: 'nova_oportunidade',
     parent_opportunity_id: null,
+    event_id: '33333333-3333-3333-3333-333333333333',
     solicitante: 'Fulano de Tal',
     email: null,
     area: 'Financeiro',

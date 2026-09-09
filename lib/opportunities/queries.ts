@@ -47,6 +47,9 @@ const OPPORTUNITY_COLUMNS =
   // 0065 — premissas e restrições do SDD. Mesma decisão HARDEN-E-06 dos
   // dois acima: conteúdo editorial do projeto, nada sensível.
   'premissas, restricoes, ' +
+  // 0066 — evento em que foi levantada. Decisão explícita (HARDEN-E-06): é
+  // um id interno da própria empresa, nada sensível; o detalhe rotula.
+  'event_id, ' +
   'status, responsavel, notas, observacao, risco, ' +
   // v0.2 (0011) — incluídos por decisão explícita (HARDEN-E-06): consumidos por
   // P11/P12/P13/P14; nenhum sensível. rpa_score é GENERATED (leitura).
@@ -76,6 +79,7 @@ const OPPORTUNITY_LIST_COLUMNS =
   'id, tenant_id, seq_id, source, solicitante, area, subarea, processo, ' +
   'frequencia, num_pessoas, ferramentas, esforco, complexidade, status, ' +
   'fte_horas, rpa_score, criticidade, created_at, priority_tag, ' +
+  'event_id, ' +
   'score, priority_level';
 
 /**
@@ -158,6 +162,11 @@ async function queryOpportunities<T>(
   // ler qualquer tenant; para os demais roles isto é no-op (a RLS já os
   // restringe ao próprio tenant de qualquer forma).
   if (filters.tenant) q = q.eq('tenant_id', filters.tenant);
+  // Evento (0066) — ids JÁ resolvidos pela page a partir do slug em
+  // `?evento=` (pode ser mais de um: o mesmo slug em empresas diferentes,
+  // quando o super-admin está em "Todas as empresas"). Lista vazia = o slug
+  // não resolveu → a page sinaliza, nunca cai em "todos".
+  if (filters.event) q = q.in('event_id', filters.event);
 
   // Soft-hide (0030): `visivel = false` some da listagem sem ser deletada. A
   // flag só é alterada via SQL — não há UI. Não é controle de acesso (isso é

@@ -31,6 +31,9 @@ export type Json =
 // -----------------------------------------------------------------------------
 export type OpportunitySource = 'persona' | 'formulario';
 
+/** 0066 — `events.status`: encerrado = o link público não aceita mais respostas. */
+export type EventStatus = 'active' | 'closed';
+
 export type OpportunityStatus =
   | 'novo'
   | 'em_analise'
@@ -565,6 +568,60 @@ export type Database = {
        * usuário e visível SÓ para aquele tenant. É a única tabela de domínio
        * com `tenant_id` nullable — ver o header da migration.
        */
+      // 0066 — eventos de levantamento (workshops) por empresa. `is_default`
+      // marca o "Registro avulso", criado pelo sistema, que recebe o que não
+      // foi vinculado a nenhum evento. RLS: lê quem lê as oportunidades da
+      // empresa; escreve `is_platform_admin() ∪ is_tenant_admin_of(tenant_id)`.
+      events: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          name: string;
+          slug: string;
+          description: string | null;
+          starts_at: string;
+          ends_at: string | null;
+          status: EventStatus;
+          is_default: boolean;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          name: string;
+          slug: string;
+          description?: string | null;
+          starts_at?: string;
+          ends_at?: string | null;
+          status?: EventStatus;
+          is_default?: boolean;
+          created_by?: string | null;
+        };
+        Update: Partial<{
+          name: string;
+          slug: string;
+          description: string | null;
+          starts_at: string;
+          ends_at: string | null;
+          status: EventStatus;
+        }>;
+        Relationships: [
+          {
+            foreignKeyName: 'events_tenant_id_fkey';
+            columns: ['tenant_id'];
+            referencedRelation: 'tenants';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'events_created_by_fkey';
+            columns: ['created_by'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       automation_tools: {
         Row: {
           id: string;
@@ -624,6 +681,8 @@ export type Database = {
           request_type: OpportunityRequestType;
           /** 0035 — automação a que esta solicitação se refere (melhoria/incidente). */
           parent_opportunity_id: string | null;
+          /** 0066 — evento em que foi levantada. Nunca null (trigger preenche o padrão). */
+          event_id: string;
           solicitante: string;
           email: string | null;
           area: string;
@@ -716,6 +775,8 @@ export type Database = {
           source: OpportunitySource;
           request_type?: OpportunityRequestType;
           parent_opportunity_id?: string | null;
+          /** 0066 — omitido = evento padrão da empresa (trigger). */
+          event_id?: string;
           solicitante: string;
           email?: string | null;
           area: string;
@@ -1151,6 +1212,14 @@ export type Database = {
     };
 
     Views: {
+      // 0066 — a lista da tela /eventos: cada evento + contagem de
+      // oportunidades VISÍVEIS (0030). `security_invoker` → RLS do chamador.
+      events_with_counts: {
+        Row: Database['public']['Tables']['events']['Row'] & {
+          opportunities_count: number;
+        };
+        Relationships: [];
+      };
       opportunities_with_score: {
         Row: Database['public']['Tables']['opportunities']['Row'] & {
           score: number;
@@ -1198,6 +1267,21 @@ export type Database = {
           logo_path: string | null;
         }[];
       };
+      // 0066 — porta anônima do formulário por evento (/r/<empresa>/<evento>).
+      // Nunca devolve o evento padrão; devolve `status` para a página mostrar
+      // "encerrado" em vez de 404.
+      fetch_public_event: {
+        Args: { p_tenant_slug: string; p_event_slug: string };
+        Returns: {
+          id: string;
+          name: string;
+          slug: string;
+          description: string | null;
+          starts_at: string;
+          ends_at: string | null;
+          status: EventStatus;
+        }[];
+      };
       // 0035 — automações existentes oferecidas no seletor de "projeto
       // associado" do formulário público (Melhoria / Incidente).
       fetch_public_opportunities: {
@@ -1234,6 +1318,17 @@ export type Database = {
           p_request_type: string;
           p_observacao: string | null;
           p_risco: string | null;
+          // 0026/0035 — paridade 5 steps + projeto associado (opcionais).
+          p_criterios?: Json | null;
+          p_beneficios?: Json | null;
+          p_fte_horas?: number | null;
+          p_fte?: string | null;
+          p_responsavel?: string | null;
+          p_criticidade?: string | null;
+          p_execucoes_mes?: number | null;
+          p_parent_opportunity_id?: string | null;
+          // 0066 — slug do evento (/r/<empresa>/<evento>); null = padrão.
+          p_event_slug?: string | null;
         };
         Returns: string;
       };

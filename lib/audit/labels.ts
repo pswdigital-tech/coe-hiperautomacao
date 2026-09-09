@@ -130,6 +130,7 @@ export const FIELD_LABEL: Record<string, string> = {
   role: 'Papel',
   cargo: 'Cargo',
   tenant_id: 'Empresa',
+  event_id: 'Evento', // 0066
   used_at: 'Utilizado em',
   name: 'Nome',
   slug: 'Slug',
