@@ -10,6 +10,7 @@ import type {
   OpportunityNote,
   OpportunityHistoryEntry,
   OpportunityTask,
+  OpportunityListItem,
 } from './types';
 import type { OpportunityFilters } from './filters';
 import { SEGMENTO_STATUSES, STATUS_ALL } from './status';
@@ -43,6 +44,9 @@ const OPPORTUNITY_COLUMNS =
   // 0062 — campos da seção Solução. Decisão explícita (HARDEN-E-06):
   // conteúdo editorial do projeto, nada sensível.
   'fora_escopo, criterios_aceite, ' +
+  // 0065 — premissas e restrições do SDD. Mesma decisão HARDEN-E-06 dos
+  // dois acima: conteúdo editorial do projeto, nada sensível.
+  'premissas, restricoes, ' +
   'status, responsavel, notas, observacao, risco, ' +
   // v0.2 (0011) — incluídos por decisão explícita (HARDEN-E-06): consumidos por
   // P11/P12/P13/P14; nenhum sensível. rpa_score é GENERATED (leitura).
@@ -60,6 +64,18 @@ const OPPORTUNITY_COLUMNS =
   // 0050 — tag de prioridade manual. Decisão explícita (HARDEN-E-06): input
   // humano, nada sensível. Convive com `priority_level` (derivado do score).
   'priority_tag, ' +
+  'score, priority_level';
+
+/**
+ * Whitelist ENXUTA da listagem — espelho SQL de `OpportunityListItem`
+ * (types.ts): só o que lista/cards/kanban/gantt/KPIs/relatório leem. A
+ * completa (`OPPORTUNITY_COLUMNS`, acima) fica para o detalhe e o export.
+ * Adicionar coluna aqui exige adicioná-la ao tipo, e vice-versa.
+ */
+const OPPORTUNITY_LIST_COLUMNS =
+  'id, tenant_id, seq_id, source, solicitante, area, subarea, processo, ' +
+  'frequencia, num_pessoas, ferramentas, esforco, complexidade, status, ' +
+  'fte_horas, rpa_score, criticidade, created_at, priority_tag, ' +
   'score, priority_level';
 
 /**
@@ -105,16 +121,37 @@ const HISTORY_COLUMNS =
   'id, opportunity_id, tenant_id, resumo, comentario, changed_by, created_at';
 
 /**
- * Busca todas as oportunidades visíveis pro tenant do usuário logado.
- * RLS filtra automaticamente — backend não precisa passar tenant_id.
+ * Busca todas as oportunidades visíveis pro tenant do usuário logado, no
+ * recorte ENXUTO da listagem (`OPPORTUNITY_LIST_COLUMNS`). RLS filtra
+ * automaticamente — backend não precisa passar tenant_id.
  *
  * Aceita `filters` opcional pra busca/dropdown/sort vindos da toolbar.
  */
 export async function fetchOpportunities(
   filters: OpportunityFilters = {}
+): Promise<OpportunityListItem[]> {
+  return queryOpportunities<OpportunityListItem>(OPPORTUNITY_LIST_COLUMNS, filters);
+}
+
+/**
+ * Mesma busca/filtros/ordenação de `fetchOpportunities`, com a linha COMPLETA
+ * (`OPPORTUNITY_COLUMNS`) — para o export CSV, que serializa todas as colunas.
+ * A listagem não usa isto de propósito: é o payload cheio que ela deixou de
+ * carregar.
+ */
+export async function fetchOpportunitiesFull(
+  filters: OpportunityFilters = {}
 ): Promise<Opportunity[]> {
+  return queryOpportunities<Opportunity>(OPPORTUNITY_COLUMNS, filters);
+}
+
+/** Filtros + ordenação da listagem — fonte única das duas funções acima. */
+async function queryOpportunities<T>(
+  columns: string,
+  filters: OpportunityFilters
+): Promise<T[]> {
   const supabase = await createClient();
-  let q = supabase.from('opportunities_with_score').select(OPPORTUNITY_COLUMNS);
+  let q = supabase.from('opportunities_with_score').select(columns);
 
   // Seletor de empresa (platform_admin) — tenant_id já resolvido pela page a
   // partir do slug em `?empresa=`. RLS aditiva (0021) permite platform_admin
@@ -246,7 +283,7 @@ export async function fetchOpportunities(
       q = q.order('score', { ascending: false }).order('seq_id', { ascending: true });
   }
 
-  const { data, error } = await q.returns<Opportunity[]>();
+  const { data, error } = await q.returns<T[]>();
 
   if (error) {
     throw new Error(`Erro ao buscar oportunidades: ${error.message}`);
@@ -592,7 +629,7 @@ export async function fetchHistoryForOpportunity(
 /**
  * Calcula os KPIs a partir do array — opera em memória.
  */
-export function computeKpis(opps: Opportunity[]): OpportunityKpis {
+export function computeKpis(opps: OpportunityListItem[]): OpportunityKpis {
   // D-02: só os 3 status exibidos na KPI bar do mockup (_giba:296-305).
   // Status intermediários (em_analise/planejamento/...) são ignorados aqui.
   const byStatus = { novo: 0, producao: 0, concluido: 0 };

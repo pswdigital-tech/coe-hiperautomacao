@@ -19,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { Opportunity } from '@/lib/opportunities/types';
+import type { OpportunityListItem } from '@/lib/opportunities/types';
 import {
   StatusBadge,
   ComplexityBadge,
@@ -58,7 +58,7 @@ function fmtDataRegistro(iso: string | null | undefined): string {
 }
 
 type Props = {
-  opportunities: Opportunity[];
+  opportunities: OpportunityListItem[];
   /** Assignees por opportunity_id (0032) — buscados em uma query só na page. */
   assigneesByOpportunity: Record<string, Assignee[]>;
   /** Mapa tenant_id → nome (Phase 17, Plan 17-07) — alimenta a coluna

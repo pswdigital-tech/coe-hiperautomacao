@@ -2,12 +2,12 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Icon } from './icons';
 import { CompanySelector } from './CompanySelector';
 import { ThemeToggle } from './ThemeToggle';
-import { getLastListUrl } from '@/lib/opportunities/filters-storage';
+import { getListUrlForCompany } from '@/lib/opportunities/filters-storage';
 import type { TenantRole } from '@/lib/database.types';
 
 const RAIL_WIDTH = 'w-16'; // recolhida — só ícones
@@ -26,7 +26,7 @@ type NavItem = {
   label: string;
   href: string;
   icon: (p: { className?: string }) => React.ReactElement;
-  isActive: (pathname: string, view: string | null) => boolean;
+  isActive: (pathname: string) => boolean;
 };
 
 const NAV: NavItem[] = [
@@ -34,19 +34,20 @@ const NAV: NavItem[] = [
     label: 'Oportunidades',
     href: '/opportunities',
     icon: Icon.Opportunities,
-    // `/opportunities/register` e `/opportunities/import` têm itens PRÓPRIOS
-    // (abaixo) — sem estas exclusões dois itens acenderiam ao mesmo tempo.
-    isActive: (p, view) =>
+    // `/opportunities/relatorio`, `/opportunities/register` e
+    // `/opportunities/import` têm itens PRÓPRIOS (abaixo) — sem estas
+    // exclusões dois itens acenderiam ao mesmo tempo.
+    isActive: (p) =>
       p.startsWith('/opportunities') &&
+      !p.startsWith('/opportunities/relatorio') &&
       !p.startsWith('/opportunities/register') &&
-      !p.startsWith('/opportunities/import') &&
-      view !== 'relatorio',
+      !p.startsWith('/opportunities/import'),
   },
   {
     label: 'Relatórios',
-    href: '/opportunities?view=relatorio',
+    href: '/opportunities/relatorio',
     icon: Icon.Reports,
-    isActive: (p, view) => p.startsWith('/opportunities') && view === 'relatorio',
+    isActive: (p) => p.startsWith('/opportunities/relatorio'),
   },
 ];
 
@@ -138,6 +139,23 @@ const TENANT_ADMIN_NAV: NavItem[] = [
   },
 ];
 
+/**
+ * Anexa `?empresa=<slug>` a um href que ainda não a carrega. A empresa
+ * selecionada vai na URL de TODO link do menu — não só nos de /admin: a URL é
+ * a fonte primária do recorte (lib/tenants/scope.ts), o cookie só cobre a
+ * navegação que a perde. É o que torna o link compartilhável (a mesma URL
+ * mostra a mesma empresa para quem a abrir) e o que o router cache do Next
+ * enxerga — variação por cookie na MESMA URL é invisível para prefetch/cache.
+ * No-op sem empresa selecionada (papéis de cliente nunca têm).
+ */
+function withEmpresa(href: string, empresa: string): string {
+  if (!empresa) return href;
+  const [path, query = ''] = href.split('?');
+  const qs = new URLSearchParams(query);
+  if (!qs.has('empresa')) qs.set('empresa', empresa);
+  return `${path}?${qs.toString()}`;
+}
+
 function initials(name: string | null, email: string): string {
   const src = name?.trim() || email;
   const parts = src.split(/\s+/).filter(Boolean);
@@ -189,13 +207,37 @@ export function Sidebar({
   /** Logo da empresa (/configuracoes). null → identidade PSW padrão. */
   logoUrl?: string | null;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const view = searchParams.get('view');
   const empresa = searchParams.get('empresa') ?? selectedEmpresa;
   const isAdmin = profile.role === 'platform_admin';
   const [expanded, setExpanded] = useState(false);
+
+  // Destino do item "Oportunidades": a URL memorizada da listagem (view +
+  // filtros, filters-storage.ts), lida do sessionStorage só depois do mount
+  // (o servidor não a conhece — evita mismatch de hidratação; mesmo padrão do
+  // breadcrumb em DetailHeader.tsx) e relida a cada navegação. Vai direto no
+  // `href` do <Link> — e não num onClick com `router.push` — para o prefetch
+  // mirar a URL que será de fato navegada; antes ele prefetchava
+  // `/opportunities` cru e o clique ia para outra URL, jogando o prefetch fora.
+  //
+  // Estando NA lista, o alvo é a própria URL corrente: o Toolbar grava a
+  // memória num efeito que roda DEPOIS deste (é descendente de <main>, que
+  // vem depois da Sidebar na árvore), então ler o storage aqui devolveria o
+  // estado anterior ao último filtro aplicado.
+  const [listHref, setListHref] = useState('/opportunities');
+  useEffect(() => {
+    if (pathname === '/opportunities') {
+      const qs = searchParams.toString();
+      setListHref(withEmpresa(qs ? `/opportunities?${qs}` : '/opportunities', empresa));
+      return;
+    }
+    // Memória DA EMPRESA selecionada (chave por empresa em filters-storage.ts),
+    // não "última de qualquer empresa": quem troca de empresa no relatório e
+    // clica em Oportunidades tem que cair na lista DESSA empresa — a "última"
+    // ainda seria a da anterior. Mesma regra que o CompanySelector já aplica.
+    setListHref(withEmpresa(getListUrlForCompany(empresa) ?? '/opportunities', empresa));
+  }, [pathname, searchParams, empresa]);
 
   const label = (text: string) => (
     <span
@@ -208,32 +250,20 @@ export function Sidebar({
   );
 
   const renderItem = (item: NavItem) => {
-    const active = item.isActive(pathname, view);
+    const active = item.isActive(pathname);
     const I = item.icon;
-    // Preserva a empresa selecionada ao navegar entre abas admin — o relatório
-    // de proposta depende de ?empresa=<slug>, e perder a seleção derruba pro
-    // empty state.
-    const href =
-      empresa && item.href.startsWith('/admin')
-        ? `${item.href}?empresa=${encodeURIComponent(empresa)}`
-        : item.href;
     // "Oportunidades" (só este item — "Relatórios" tem href próprio) volta pra
     // onde a pessoa deixou a lista (view + filtros), não pra `/opportunities`
-    // crua. Memória lida do sessionStorage (filters-storage.ts), gravada pelo
-    // Toolbar a cada mudança de filtro/view.
-    function onClick(e: React.MouseEvent<HTMLAnchorElement>) {
-      if (item.href !== '/opportunities') return;
-      const stored = getLastListUrl();
-      if (stored && stored !== '/opportunities') {
-        e.preventDefault();
-        router.push(stored);
-      }
-    }
+    // crua — ver `listHref` acima. Os demais carregam `?empresa=` (ver
+    // `withEmpresa`): o relatório de proposta em /admin e o Relatório de
+    // portfólio dependem dele — perder a seleção derrubava o primeiro no empty
+    // state e deixava o segundo recortado por um cookie que a URL não mostrava.
+    const href =
+      item.href === '/opportunities' ? listHref : withEmpresa(item.href, empresa);
     return (
       <Link
         key={item.label}
         href={href}
-        onClick={onClick}
         className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] transition-colors ${
           active
             ? 'bg-nav-active text-white font-semibold'

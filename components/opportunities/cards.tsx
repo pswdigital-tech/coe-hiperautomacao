@@ -20,7 +20,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { Opportunity } from '@/lib/opportunities/types';
+import type { OpportunityListItem } from '@/lib/opportunities/types';
 import {
   SourceBadge,
   StatusBadge,
@@ -33,7 +33,7 @@ import { PRIORITY_META } from '@/lib/opportunities/priority-labels';
 import { reorderOpportunities } from '@/lib/opportunities/priority-actions';
 
 type Props = {
-  opportunities: Opportunity[];
+  opportunities: OpportunityListItem[];
   /** RBAC — `viewer` não rearranja a ordem de prioridade (0049). */
   readOnly?: boolean;
 };
@@ -144,7 +144,7 @@ function SortableCard({
   position,
   draggable,
 }: {
-  opportunity: Opportunity;
+  opportunity: OpportunityListItem;
   position: number;
   draggable: boolean;
 }) {

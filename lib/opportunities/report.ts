@@ -2,7 +2,7 @@
 // =============================================================================
 // Agregação PURA do portfólio por área para a view "Relatório" (Phase 14).
 // Porta a lógica de `renderRelatorio` (_giba_wsi-dashboard.html:853-896) para
-// uma função testável sobre Opportunity[]. Módulo puro (sem JSX/React, sem
+// uma função testável sobre OpportunityListItem[]. Módulo puro (sem JSX/React, sem
 // import de servidor) — importável em vitest. Read-only: nunca persiste nada
 // (docs/PROJETO.md §3).
 //
@@ -14,7 +14,7 @@
 // =============================================================================
 
 import type {
-  Opportunity,
+  OpportunityListItem,
   OpportunityPhase,
   OpportunityRisk,
   OpportunityStatus,
@@ -58,11 +58,11 @@ export type PortfolioReport = {
 };
 
 /**
- * Agrega Opportunity[] em PortfolioReport — réplica exata de renderRelatorio
+ * Agrega OpportunityListItem[] em PortfolioReport — réplica exata de renderRelatorio
  * (_giba:853-896). Função pura: não busca dados, não escreve no banco, não
  * recomputa score (usa a coluna `priority_level` da view — D-06).
  */
-export function buildReport(opps: Opportunity[]): PortfolioReport {
+export function buildReport(opps: OpportunityListItem[]): PortfolioReport {
   const areaMap: Record<string, { count: number; fte: number }> = {};
 
   for (const o of opps) {
@@ -175,7 +175,7 @@ export type ValueSummary = {
   pctRealizado: number;
 };
 
-export function buildValueSummary(opps: Opportunity[]): ValueSummary {
+export function buildValueSummary(opps: OpportunityListItem[]): ValueSummary {
   let fteRealizado = 0;
   let ftePotencial = 0;
   let emOperacao = 0;
@@ -237,7 +237,7 @@ export type MatrixPoint = {
 };
 
 /** Média esforço+complexidade → 1–3. Ambos null → 2 (médio, neutro). */
-function effortScore(o: Opportunity): number {
+function effortScore(o: OpportunityListItem): number {
   const e = o.esforco ? EFFORT_VAL[o.esforco] : null;
   const c = o.complexidade ? COMPLEX_VAL[o.complexidade] : null;
   if (e != null && c != null) return (e + c) / 2;
@@ -260,7 +260,7 @@ export type PriorityMatrix = {
   counts: Record<MatrixQuadrant, number>;
 };
 
-export function buildPriorityMatrix(opps: Opportunity[]): PriorityMatrix {
+export function buildPriorityMatrix(opps: OpportunityListItem[]): PriorityMatrix {
   const points: MatrixPoint[] = opps.map((o) => {
     const effort = effortScore(o);
     const impact = typeof o.score === 'number' ? o.score : 0;
@@ -324,7 +324,7 @@ export type Funnel = {
   conversao: number;
 };
 
-export function buildFunnel(opps: Opportunity[]): Funnel {
+export function buildFunnel(opps: OpportunityListItem[]): Funnel {
   const countByStatus = Object.fromEntries(
     FUNNEL_ORDER.map((s) => [s, 0])
   ) as Record<OpportunityStatus, number>;
@@ -493,7 +493,7 @@ export type ToolMix = {
  * array vazio é 'semFerramenta'. Ler de `ferramentas` (e não do enum legado)
  * é o que faz {sap} aparecer como ferramenta definida.
  */
-export function buildToolMix(opps: Opportunity[]): ToolMix {
+export function buildToolMix(opps: OpportunityListItem[]): ToolMix {
   const mix: ToolMix = { rpa: 0, n8n: 0, ambos: 0, outras: 0, semFerramenta: 0 };
   for (const o of opps) {
     const tools = o.ferramentas ?? [];

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, use, useEffect, useRef, useState } from 'react';
 import {
   buildQuery,
   parseFilters,
@@ -22,7 +22,10 @@ import type { TenantSummary } from '@/lib/tenants/queries';
 import type { AutomationToolOption } from '@/lib/opportunities/tools';
 
 type Props = {
-  counts: { visible: number; total: number };
+  /** Contagem da lista. Chega como Promise (streaming, ver page.tsx): a
+   *  toolbar renderiza com os filtros ANTES de a consulta de oportunidades
+   *  terminar, e o número entra quando ela chega (`ListCount`, abaixo). */
+  counts: Promise<{ visible: number; total: number }>;
   areas: string[];
   /** Pessoas do tenant, para o filtro "Membro" (0032). Vazio = filtro escondido
    *  (ex: seletor de empresa sem nenhuma selecionada). */
@@ -36,9 +39,10 @@ type Props = {
    *  botão "Nova Oportunidade" (a criação agora é só pelo formulário público). */
   readOnly?: boolean;
   /** Empresas em que o usuário tem oportunidade atribuída (Phase 17, Plan
-   *  17-07) — alimenta o filtro "Empresa". Vazio por padrão: nenhuma mudança
-   *  de comportamento para os demais papéis. */
-  companies?: TenantSummary[];
+   *  17-07) — alimenta o filtro "Empresa". Promise pelo mesmo motivo de
+   *  `counts`: os ids vêm da própria consulta de oportunidades. Ausente =
+   *  filtro nunca renderiza (demais papéis). */
+  companies?: Promise<TenantSummary[]>;
   /** Exibe o filtro "Empresa" — flag calculada no servidor a partir do papel
    *  do usuário. Este componente NÃO decide por papel; só lê a flag. */
   showCompanyFilter?: boolean;
@@ -51,10 +55,11 @@ type Props = {
   companyScope?: string;
 };
 
-type View = 'table' | 'cards' | 'kanban' | 'gantt' | 'relatorio';
+type View = 'table' | 'cards' | 'kanban' | 'gantt';
 
 // Rótulos do switcher: Lista · Gestão · Gantt (os ids internos table/kanban/gantt
-// permanecem; cards/relatorio ainda existem por URL mas saíram do switcher).
+// permanecem; `cards` ainda existe por URL mas saiu do switcher). O Relatório
+// não é mais uma view da lista — tem rota própria (/opportunities/relatorio).
 const VIEWS: { id: View; icon: string; label: string }[] = [
   { id: 'table', icon: '☰', label: 'Lista' },
   { id: 'kanban', icon: '📊', label: 'Gestão' },
@@ -62,8 +67,7 @@ const VIEWS: { id: View; icon: string; label: string }[] = [
 ];
 
 function parseView(raw: string | null): View {
-  if (raw === 'cards' || raw === 'kanban' || raw === 'gantt' || raw === 'relatorio')
-    return raw;
+  if (raw === 'cards' || raw === 'kanban' || raw === 'gantt') return raw;
   return 'table';
 }
 
@@ -73,7 +77,7 @@ export function Toolbar({
   members,
   externalMembers = [],
   tenantSlug,
-  companies = [],
+  companies,
   showCompanyFilter = false,
   tools = [],
   companyScope = '',
@@ -298,21 +302,17 @@ export function Toolbar({
       <div className="flex flex-wrap items-center gap-2">
         {/* Filtro "Empresa" (Phase 17, Plan 17-07): escondido sem a flag ou
             com uma única empresa (mesmo precedente do filtro "Membro" acima
-            — filtro que não filtra nada só ocupa espaço). */}
-        {showCompanyFilter && companies.length > 1 && (
-          <select
-            value={companySlug}
-            onChange={(e) => changeCompany(e.target.value)}
-            className={selectClass}
-            aria-label="Filtrar por empresa"
-          >
-            <option value="">Todas as empresas</option>
-            {companies.map((c) => (
-              <option key={c.id} value={c.slug}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            — filtro que não filtra nada só ocupa espaço). Suspende só este
+            trecho enquanto a lista de empresas não chega. */}
+        {showCompanyFilter && companies && (
+          <Suspense fallback={null}>
+            <CompanyFilter
+              companies={companies}
+              value={companySlug}
+              onChange={changeCompany}
+              className={selectClass}
+            />
+          </Suspense>
         )}
         <select
           value={filters.requestType ?? ''}
@@ -548,9 +548,56 @@ export function Toolbar({
         </button>
 
         <span className="ml-auto text-[12px] text-mut whitespace-nowrap">
-          {counts.visible} de {counts.total} oportunidades
+          <Suspense fallback={<>… oportunidades</>}>
+            <ListCount counts={counts} />
+          </Suspense>
         </span>
       </div>
     </div>
+  );
+}
+
+// =============================================================================
+// Trechos que dependem da consulta de oportunidades — leem a Promise vinda do
+// Server Component com `use()` e suspendem SÓ a si mesmos (cada um dentro do
+// próprio <Suspense> acima), em vez de segurar a toolbar inteira.
+// =============================================================================
+
+function ListCount({ counts }: { counts: Props['counts'] }) {
+  const c = use(counts);
+  return (
+    <>
+      {c.visible} de {c.total} oportunidades
+    </>
+  );
+}
+
+function CompanyFilter({
+  companies,
+  value,
+  onChange,
+  className,
+}: {
+  companies: Promise<TenantSummary[]>;
+  value: string;
+  onChange: (slug: string) => void;
+  className: string;
+}) {
+  const list = use(companies);
+  if (list.length <= 1) return null;
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={className}
+      aria-label="Filtrar por empresa"
+    >
+      <option value="">Todas as empresas</option>
+      {list.map((c) => (
+        <option key={c.id} value={c.slug}>
+          {c.name}
+        </option>
+      ))}
+    </select>
   );
 }

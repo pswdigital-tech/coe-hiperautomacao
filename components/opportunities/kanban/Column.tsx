@@ -5,7 +5,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import type { Opportunity, OpportunityStatus } from '@/lib/opportunities/types';
+import type { OpportunityListItem, OpportunityStatus } from '@/lib/opportunities/types';
 import { KanbanCard } from './Card';
 
 type Props = {
@@ -13,7 +13,7 @@ type Props = {
   label: string;
   icon: string;
   color: string;
-  opportunities: Opportunity[];
+  opportunities: OpportunityListItem[];
   readOnly?: boolean;
 };
 

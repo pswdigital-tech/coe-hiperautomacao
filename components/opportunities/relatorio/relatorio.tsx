@@ -20,7 +20,7 @@
 
 import { useMemo, useState } from 'react';
 import type {
-  Opportunity,
+  OpportunityListItem,
   OpportunityPhase,
   OpportunityRisk,
 } from '@/lib/opportunities/types';
@@ -40,7 +40,7 @@ import { FunnelCycle } from '@/components/opportunities/relatorio/FunnelCycle';
 import { RiskPanel } from '@/components/opportunities/relatorio/RiskPanel';
 
 type Props = {
-  opportunities: Opportunity[];
+  opportunities: OpportunityListItem[];
   phases: OpportunityPhase[];
   risks: OpportunityRisk[];
   /** Rótulo real de origem (nome do tenant) — NÃO hardcodar. */

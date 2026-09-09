@@ -10,7 +10,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import type { Opportunity, OpportunityStatus } from '@/lib/opportunities/types';
+import type { OpportunityListItem, OpportunityStatus } from '@/lib/opportunities/types';
 import { updateOpportunityStatus } from '@/lib/opportunities/actions';
 import { reorderOpportunities } from '@/lib/opportunities/priority-actions';
 import { isManualSort, parseFilters } from '@/lib/opportunities/filters';
@@ -18,7 +18,7 @@ import { STATUS_ORDER, STATUS_META } from '@/lib/opportunities/status';
 import { KanbanColumn } from './Column';
 
 type Props = {
-  opportunities: Opportunity[];
+  opportunities: OpportunityListItem[];
   /** RBAC (v0.3) — viewer não arrasta cards nem edita nada. */
   readOnly?: boolean;
 };

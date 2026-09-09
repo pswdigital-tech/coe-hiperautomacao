@@ -2,7 +2,7 @@
 
 import { Fragment, useState } from 'react';
 import type {
-  Opportunity,
+  OpportunityListItem,
   OpportunityPhase,
   OpportunityTask,
 } from '@/lib/opportunities/types';
@@ -11,7 +11,7 @@ import { TASK_STATUS_META } from '@/lib/opportunities/task-labels';
 import { computeTaskRollup, groupTasksByParent } from '@/lib/opportunities/task-rollup';
 
 type Props = {
-  opportunities: Opportunity[];
+  opportunities: OpportunityListItem[];
   phases: OpportunityPhase[];
   /** Tarefas (raízes + subtarefas) de TODAS as oportunidades da lista. */
   tasks?: OpportunityTask[];

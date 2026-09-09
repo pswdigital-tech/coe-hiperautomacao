@@ -37,9 +37,15 @@ export function CompanySelector({
     // FILTROS PRÓPRIOS daquela empresa (memória isolada por empresa em
     // filters-storage.ts) em vez de herdar os filtros da empresa anterior —
     // staff PSW reclamou que via os filtros "vazarem" de uma empresa pra
-    // outra. Nas demais páginas (Admin, Configurações...) o comportamento
-    // continua o de sempre: só troca `?empresa=` mantendo o resto da URL.
-    if (pathname.startsWith('/opportunities')) {
+    // outra. O Relatório fica de fora: ele não tem filtros de lista, e mandar
+    // quem está lendo o relatório de volta pra listagem só porque trocou de
+    // empresa seria perder a tela. Nas demais páginas (Admin, Configurações...)
+    // o comportamento continua o de sempre: só troca `?empresa=` mantendo o
+    // resto da URL.
+    if (
+      pathname.startsWith('/opportunities') &&
+      !pathname.startsWith('/opportunities/relatorio')
+    ) {
       const stored = getListUrlForCompany(value);
       const target =
         stored ?? (value ? `/opportunities?empresa=${encodeURIComponent(value)}` : '/opportunities');

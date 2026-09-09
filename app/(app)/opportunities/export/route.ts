@@ -14,7 +14,7 @@
 import { resolveEmpresaSlug } from '@/lib/tenants/scope';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { fetchOpportunities } from '@/lib/opportunities/queries';
+import { fetchOpportunitiesFull } from '@/lib/opportunities/queries';
 import { fetchTenantIdBySlug } from '@/lib/tenants/queries';
 import { parseFilters } from '@/lib/opportunities/filters';
 import { opportunitiesToCsv } from '@/lib/opportunities/csv';
@@ -48,7 +48,9 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const opportunities = await fetchOpportunities({ ...filters, tenant: tenantId });
+  // Linha COMPLETA de propósito: o CSV serializa todas as colunas. A listagem
+  // usa o recorte enxuto (`fetchOpportunities`).
+  const opportunities = await fetchOpportunitiesFull({ ...filters, tenant: tenantId });
   const assignees = await fetchAssigneesForOpportunities(opportunities.map((o) => o.id));
   const csv = opportunitiesToCsv(opportunities, assignees);
 

@@ -3,13 +3,13 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useRouter } from 'next/navigation';
-import type { Opportunity } from '@/lib/opportunities/types';
+import type { OpportunityListItem } from '@/lib/opportunities/types';
 import { SourceBadge, RpaFitBadge } from '@/components/opportunities/cells';
 import { scoreColor } from '@/lib/opportunities/utils';
 import { PRIORITY_META } from '@/lib/opportunities/priority-labels';
 
 type Props = {
-  opportunity: Opportunity;
+  opportunity: OpportunityListItem;
   readOnly?: boolean;
 };
 
