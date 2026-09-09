@@ -109,4 +109,11 @@ export const Icon = {
       <path d="M8 7h1M8 11h1M15 7h1M15 11h1" />
     </svg>
   ),
+  // Calendário — item "Eventos" da Sidebar (0066).
+  Calendar: ({ className }: P) => (
+    <svg {...base(className)}>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M16 3v4M8 3v4M3 11h18" />
+    </svg>
+  ),
 };

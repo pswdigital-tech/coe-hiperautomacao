@@ -73,6 +73,18 @@ const IMPORT_NAV: NavItem = {
   isActive: (p) => p.startsWith('/opportunities/import'),
 };
 
+// Eventos de levantamento (0066) — gateado por `canImport`, o MESMO
+// sinalizador da importação: gerir eventos é ato de administração da empresa
+// (super-admin, admin da empresa, staff PSW com concessão). Fica no bloco
+// principal porque é de onde sai o link do formulário — trabalho de
+// levantamento, não de configuração.
+const EVENTS_NAV: NavItem = {
+  label: 'Eventos',
+  href: '/eventos',
+  icon: Icon.Calendar,
+  isActive: (p) => p.startsWith('/eventos'),
+};
+
 const ADMIN_NAV: NavItem[] = [
   {
     label: 'Proposta',
@@ -337,6 +349,7 @@ export function Sidebar({
           <nav className="flex-1 px-3 py-2 flex flex-col gap-1 overflow-y-auto">
             {NAV.map(renderItem)}
             {canRegisterForTenant && renderItem(REGISTER_NAV)}
+            {canImport && renderItem(EVENTS_NAV)}
             {canImport && renderItem(IMPORT_NAV)}
             {isAdmin && (
               <>
