@@ -2,7 +2,14 @@ import type { NextConfig } from "next";
 import { withBotId } from 'botid/next/config';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    serverActions: {
+      // Upload de documentos da oportunidade (DocumentosTab) viaja pela Server Action
+      // uploadDocument via FormData. O limite padrão do Next é 1 MB; a regra de negócio
+      // aceita até 8 MB (DOCUMENT_MAX_SIZE_BYTES), com folga para o overhead do multipart.
+      bodySizeLimit: '10mb',
+    },
+  },
 };
 
 // Phase 7.5 Bloco D — withBotId injeta a infra do Vercel BotID na build.
