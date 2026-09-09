@@ -73,6 +73,24 @@ export async function fetchEventOptions(
   return sortEvents(data ?? []);
 }
 
+/**
+ * Todos os eventos que o usuário enxerga, sem recorte de empresa — para o
+ * filtro "Evento" do super-admin em "Todas as empresas" (a RLS de `events`
+ * decide o conjunto; para papéis de cliente devolve só a própria empresa).
+ */
+export async function fetchAllEventOptions(): Promise<EventOption[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('events')
+    .select(EVENT_OPTION_COLUMNS)
+    .returns<EventOption[]>();
+  if (error) {
+    console.error('[events/queries] fetchAllEventOptions:', error.message);
+    return [];
+  }
+  return sortEvents(data ?? []);
+}
+
 /** Rótulos para a coluna/detalhe — ids vindos de linhas já filtradas pela RLS. */
 export async function fetchEventsByIds(ids: string[]): Promise<EventOption[]> {
   const uniqueIds = Array.from(new Set(ids));

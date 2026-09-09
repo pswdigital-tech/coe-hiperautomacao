@@ -25,7 +25,12 @@ import {
   fetchTenantsByIds,
   type TenantSummary,
 } from '@/lib/tenants/queries';
-import { fetchEventOptions, resolveEventIdsBySlug } from '@/lib/events/queries';
+import {
+  fetchAllEventOptions,
+  fetchEventOptions,
+  resolveEventIdsBySlug,
+} from '@/lib/events/queries';
+import type { EventFilterOption } from '@/components/opportunities/toolbar';
 import {
   getCurrentProfile,
   isPlatformAdmin,
@@ -43,6 +48,7 @@ import {
   ToolbarSkeleton,
 } from '@/components/opportunities/skeletons';
 import type { OpportunityListItem } from '@/lib/opportunities/types';
+import type { EventOption } from '@/lib/events/types';
 
 type SearchParams = Promise<Record<string, string | undefined>>;
 
@@ -172,6 +178,9 @@ export default async function OpportunitiesPage({
         <ToolbarSection
           scopedTenantId={scopedTenantId}
           membersTenantId={membersTenantId}
+          // Super-admin em "Todas as empresas": o filtro "Evento" lista os
+          // eventos de TODAS as empresas, agrupados por empresa.
+          crossTenantEvents={isAdmin && !scopedTenantId}
           empresaNotFound={empresaNotFound}
           counts={counts}
           companies={companies}
@@ -226,6 +235,7 @@ export default async function OpportunitiesPage({
 async function ToolbarSection({
   scopedTenantId,
   membersTenantId,
+  crossTenantEvents,
   empresaNotFound,
   counts,
   companies,
@@ -235,6 +245,7 @@ async function ToolbarSection({
 }: {
   scopedTenantId: string | undefined;
   membersTenantId: string | undefined;
+  crossTenantEvents: boolean;
   empresaNotFound: boolean;
   counts: Promise<{ visible: number; total: number }>;
   companies: Promise<TenantSummary[]>;
@@ -248,7 +259,7 @@ async function ToolbarSection({
   // então não poder filtrar por ela era um buraco. Vêm em lista separada
   // (`externalMembers`) só para a toolbar agrupá-las sob outro rótulo — o
   // valor do filtro é o mesmo `profiles.id`.
-  const [areas, tools, tenantMembers, assignedMembers, events] = await Promise.all([
+  const [areas, tools, tenantMembers, assignedMembers, rawEvents] = await Promise.all([
     fetchAreas(scopedTenantId),
     // 0055 — catálogo de ferramentas para o filtro da toolbar. A RLS já limita
     // ao global + o do tenant do usuário.
@@ -259,13 +270,29 @@ async function ToolbarSection({
     empresaNotFound
       ? Promise.resolve([] as AssignableProfile[])
       : fetchAssignedProfiles(membersTenantId),
-    // 0066 — eventos da empresa em foco para o filtro "Evento". Sem empresa em
-    // foco (super-admin em "Todas") o filtro some: um slug de evento só faz
-    // sentido dentro de uma empresa.
-    membersTenantId && !empresaNotFound
-      ? fetchEventOptions(membersTenantId)
-      : Promise.resolve([]),
+    // 0066 — eventos para o filtro "Evento": os da empresa em foco, ou, para
+    // o super-admin em "Todas as empresas", os de todas (a RLS decide), que a
+    // toolbar agrupa por empresa e, ao escolher, foca a empresa junto.
+    empresaNotFound
+      ? Promise.resolve([] as EventOption[])
+      : membersTenantId
+        ? fetchEventOptions(membersTenantId)
+        : crossTenantEvents
+          ? fetchAllEventOptions()
+          : Promise.resolve([] as EventOption[]),
   ]);
+  // Em "Todas as empresas" cada opção carrega slug/nome da empresa dona — o
+  // slug de evento só é único DENTRO de uma empresa, então o filtro precisa
+  // dos dois para não misturar homônimos.
+  let events: EventFilterOption[] = rawEvents;
+  if (crossTenantEvents && rawEvents.length > 0) {
+    const owners = await fetchTenantsByIds(rawEvents.map((e) => e.tenant_id));
+    const ownerById = new Map(owners.map((t) => [t.id, t]));
+    events = rawEvents.map((e) => {
+      const owner = ownerById.get(e.tenant_id);
+      return owner ? { ...e, tenantSlug: owner.slug, tenantName: owner.name } : e;
+    });
+  }
   const tenantMemberIds = new Set(tenantMembers.map((m) => m.id));
   const externalMembers = assignedMembers
     .filter((m) => !tenantMemberIds.has(m.id))

@@ -22,6 +22,16 @@ import type { TenantSummary } from '@/lib/tenants/queries';
 import type { AutomationToolOption } from '@/lib/opportunities/tools';
 import type { EventOption } from '@/lib/events/types';
 
+/**
+ * Opção do filtro "Evento" (0066). `tenantSlug`/`tenantName` só vêm no modo
+ * "Todas as empresas" do super-admin: aí a opção foca a empresa junto com o
+ * evento (o slug de evento só é único dentro de uma empresa).
+ */
+export type EventFilterOption = EventOption & {
+  tenantSlug?: string;
+  tenantName?: string;
+};
+
 type Props = {
   /** Contagem da lista. Chega como Promise (streaming, ver page.tsx): a
    *  toolbar renderiza com os filtros ANTES de a consulta de oportunidades
@@ -39,7 +49,7 @@ type Props = {
    *  <slug>`, resolvido no servidor como `?empresa=`). Vazio/só o padrão =
    *  filtro escondido. O link do formulário saiu daqui: agora é por evento,
    *  na tela /eventos. */
-  events?: EventOption[];
+  events?: EventFilterOption[];
   /** Mantido por compatibilidade com os callers; sem uso desde a remoção do
    *  botão "Nova Oportunidade" (a criação agora é só pelo formulário público). */
   readOnly?: boolean;
@@ -189,13 +199,43 @@ export function Toolbar({
   // (que preserva params desconhecidos, então trocar outro filtro mantém o
   // evento). Some quando a empresa em foco só tem o evento padrão.
   const eventoSlug = params.get('evento') ?? '';
-  function changeEvent(slug: string) {
+  // Valor da opção: `<evento>` com empresa em foco, ou `<empresa>/<evento>`
+  // em "Todas as empresas" — escolher um evento de outra empresa foca a
+  // empresa junto, senão o slug seria ambíguo entre homônimos.
+  function changeEvent(value: string) {
     const sp = new URLSearchParams(params.toString());
-    if (slug) sp.set('evento', slug);
-    else sp.delete('evento');
+    const [first, second] = value.split('/');
+    if (!value) {
+      sp.delete('evento');
+    } else if (second) {
+      sp.set('empresa', first);
+      sp.set('evento', second);
+    } else {
+      sp.set('evento', first);
+    }
     const qs = sp.toString();
     router.replace(qs ? `/opportunities?${qs}` : '/opportunities');
   }
+  const eventGroups = (() => {
+    const groups = new Map<string, { label: string; items: EventFilterOption[] }>();
+    for (const ev of events) {
+      const key = ev.tenantSlug ?? '';
+      const g = groups.get(key) ?? { label: ev.tenantName ?? '', items: [] };
+      g.items.push(ev);
+      groups.set(key, g);
+    }
+    return Array.from(groups.entries()).sort((a, b) =>
+      a[1].label.localeCompare(b[1].label, 'pt-BR'),
+    );
+  })();
+  const eventLabel = (ev: EventFilterOption) =>
+    ev.is_default
+      ? `${ev.name} (sem evento)`
+      : ev.status === 'closed'
+        ? `${ev.name} (encerrado)`
+        : ev.name;
+  const eventValue = (ev: EventFilterOption) =>
+    ev.tenantSlug ? `${ev.tenantSlug}/${ev.slug}` : ev.slug;
 
   function clearAll() {
     const view = params.get('view');
@@ -300,7 +340,7 @@ export function Toolbar({
             />
           </Suspense>
         )}
-        {events.length > 1 && (
+        {events.length > 0 && (
           <select
             value={eventoSlug}
             onChange={(e) => changeEvent(e.target.value)}
@@ -308,15 +348,21 @@ export function Toolbar({
             aria-label="Filtrar por evento"
           >
             <option value="">Todos os Eventos</option>
-            {events.map((ev) => (
-              <option key={ev.id} value={ev.slug}>
-                {ev.is_default
-                  ? `${ev.name} (sem evento)`
-                  : ev.status === 'closed'
-                    ? `${ev.name} (encerrado)`
-                    : ev.name}
-              </option>
-            ))}
+            {eventGroups.length === 1 && !eventGroups[0][0]
+              ? eventGroups[0][1].items.map((ev) => (
+                  <option key={ev.id} value={eventValue(ev)}>
+                    {eventLabel(ev)}
+                  </option>
+                ))
+              : eventGroups.map(([key, g]) => (
+                  <optgroup key={key || '_'} label={g.label || 'Empresa'}>
+                    {g.items.map((ev) => (
+                      <option key={ev.id} value={eventValue(ev)}>
+                        {eventLabel(ev)}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
           </select>
         )}
         <select
