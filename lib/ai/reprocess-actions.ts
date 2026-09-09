@@ -14,13 +14,14 @@
 // TRÊS CAMADAS DE DEFESA, na ordem em que rodam:
 //   1. `tenant_id` derivado da OPORTUNIDADE (via client autenticado, então a
 //      RLS já recorta o que a pessoa enxerga) — nunca do formulário.
-//   2. Gate de papel aqui: `platform_admin` em qualquer empresa OU o par
-//      pessoa × empresa (`isTenantAdminOf`) contra o tenant DESTA
-//      oportunidade — mesmo critério do gate visual em
-//      `app/(app)/opportunities/[id]/page.tsx` e do gate de atribuição em
-//      `assignee-actions.ts`. Cobre os três papéis pedidos: super-admin da
-//      plataforma, staff PSW com concessão de admin naquela empresa (0045) e
-//      admin da própria empresa.
+//   2. Gate de papel aqui, via `canReprocessAiEnrichment()` (fonte única, em
+//      `lib/security/role.ts`), contra o tenant DESTA oportunidade: só
+//      `platform_admin` (qualquer empresa) e `psw_staff` COM concessão de admin
+//      naquela empresa (0045). É de propósito MAIS ESTREITO que o gate de
+//      atribuição de `assignee-actions.ts`: o `tenant_admin` do cliente NÃO
+//      reprocessa — a ação queima crédito de IA da PSW e pode reescrever os
+//      campos derivados em massa, então quem dispara é a PSW. O gate visual em
+//      `app/(app)/opportunities/[id]/page.tsx` usa o mesmo predicado.
 //   3. RLS (0015/0021/0025/0047) é o bloqueio real do UPDATE, e o
 //      `.select('id')` depois dele existe para transformar "casou zero linhas"
 //      em erro visível em vez de sucesso silencioso.
@@ -34,8 +35,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import {
   getCurrentProfile,
-  isPlatformAdmin,
-  isTenantAdminOf,
+  canReprocessAiEnrichment,
   WRITE_SCOPE_DENIED_MESSAGE,
 } from '@/lib/security/role';
 import { enrichOpportunity } from '@/lib/ai/enrichment';
@@ -56,7 +56,7 @@ export type ReprocessMode = 'fill-empty' | 'overwrite';
 export type ReprocessResult = { ok: true } | { ok: false; error: string };
 
 const NOT_ADMIN_MESSAGE =
-  'Apenas administradores da empresa podem reprocessar a análise da IA.';
+  'Reprocessar a análise da IA é uma ação restrita à equipe da PSW.';
 
 export async function reprocessOpportunityEnrichment(
   opportunityId: string,
@@ -79,8 +79,7 @@ export async function reprocessOpportunityEnrichment(
   if (!opp) return { ok: false, error: WRITE_SCOPE_DENIED_MESSAGE };
 
   // Camada 2 — gate de papel contra o tenant DESTA oportunidade.
-  const canReprocess =
-    isPlatformAdmin(profile) || (await isTenantAdminOf(profile, opp.tenant_id));
+  const canReprocess = await canReprocessAiEnrichment(profile, opp.tenant_id);
   if (!canReprocess) return { ok: false, error: NOT_ADMIN_MESSAGE };
 
   // Volta para 'pending' ANTES de chamar a IA: `enrichOpportunity` filtra por

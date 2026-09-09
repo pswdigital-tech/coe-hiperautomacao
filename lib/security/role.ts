@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { resolveEmpresaSlug } from '@/lib/tenants/scope';
 import { fetchTenantIdBySlug } from '@/lib/tenants/queries';
@@ -20,19 +21,12 @@ import type { TenantRole } from '@/lib/opportunities/types';
  * `profile` antes por outros motivos).
  */
 export async function getCurrentUserRole(): Promise<TenantRole | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  return data?.role ?? null;
+  // Derivado do profile memoizado por request (`getCurrentProfile`, abaixo):
+  // antes cada chamada era mais uma ida ao Auth (`getUser()` é HTTP, não
+  // validação local de JWT) + mais um `select` em `profiles`, repetidos por
+  // layout e página no mesmo render.
+  const profile = await getCurrentProfile();
+  return profile?.role ?? null;
 }
 
 /** Açúcar pra Server Components decidirem o que esconder na UI. */
@@ -79,8 +73,14 @@ export type CurrentProfile = {
  * Profile do usuário autenticado corrente, com role e tenant. Fonte única
  * para decisões de autorização no servidor (Server Components, Server
  * Actions, Route Handlers).
+ *
+ * Memoizado por request com `cache()` do React: layout, página e os helpers
+ * derivados (`getCurrentUserRole`/`isReadOnlyViewer`) compartilham UMA ida ao
+ * Auth + UM `select` em `profiles` por render, em vez de repetir o par a cada
+ * chamada. Fora de um render RSC (Route Handler, teste) `cache()` degrada para
+ * a chamada direta — comportamento idêntico ao anterior.
  */
-export async function getCurrentProfile(): Promise<CurrentProfile | null> {
+export const getCurrentProfile = cache(async (): Promise<CurrentProfile | null> => {
   const supabase = await createClient();
 
   const {
@@ -112,7 +112,7 @@ export async function getCurrentProfile(): Promise<CurrentProfile | null> {
     tenantName: tenant?.name ?? null,
     tenantSlug: tenant?.slug ?? null,
   };
-}
+});
 
 /**
  * Super-admin de plataforma (PSW): enxerga TODOS os tenants. Espelha o
@@ -315,6 +315,38 @@ export async function isTenantAdminOf(
     .maybeSingle();
 
   return Boolean(data);
+}
+
+/**
+ * Reprocessar a análise da IA é privilégio da PSW, não da empresa cliente —
+ * gate MAIS ESTREITO que o de atribuição (`isPlatformAdmin || isTenantAdminOf`):
+ *
+ *   PODE     → `platform_admin` (super-admin da plataforma, qualquer empresa)
+ *            → `psw_staff` COM concessão de admin naquela empresa (0045)
+ *   NÃO PODE → `tenant_admin` da própria empresa, `member`, `viewer`
+ *
+ * POR QUE O `tenant_admin` FICOU DE FORA: a ação queima crédito de IA da PSW e
+ * pode reescrever campos derivados em massa (`overwrite`). Quem responde por
+ * esse custo e por essa análise é a PSW, então quem dispara é a PSW — inclusive
+ * quando o staff opera dentro da empresa do cliente. Deixar o admin do cliente
+ * apertar o botão seria dar a ele uma alavanca de custo que não é dele.
+ *
+ * O `psw_staff` sem concessão naquela empresa também não pode: ser staff da PSW
+ * não basta, tem que estar administrando AQUELA empresa (mesmo par pessoa ×
+ * empresa de `isTenantAdminOf`).
+ *
+ * Fonte ÚNICA do predicado — usado pelo gate visual
+ * (`app/(app)/opportunities/[id]/page.tsx`) e pelo gate real da Server Action
+ * (`lib/ai/reprocess-actions.ts`). Aqui a RLS NÃO é a última linha de defesa: o
+ * enriquecimento roda com service role, então este gate é parte do bloqueio.
+ */
+export async function canReprocessAiEnrichment(
+  profile: CurrentProfile | null,
+  tenantId: string
+): Promise<boolean> {
+  if (isPlatformAdmin(profile)) return true;
+  if (!isPswStaff(profile)) return false;
+  return isTenantAdminOf(profile, tenantId);
 }
 
 /**

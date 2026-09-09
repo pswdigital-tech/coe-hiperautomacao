@@ -6,18 +6,21 @@
 // defesa dentro dela: o gate desta action É parte do bloqueio. Por isso ele é
 // testado isoladamente, sem banco.
 //
-// Contrato (mesmo predicado do gate de atribuição em assignee-actions.ts e do
-// gate visual em app/(app)/opportunities/[id]/page.tsx):
+// Contrato — `canReprocessAiEnrichment()`, MAIS ESTREITO que o gate de
+// atribuição de assignee-actions.ts (e usado também pelo gate visual em
+// app/(app)/opportunities/[id]/page.tsx):
 //   PODE   → platform_admin (qualquer empresa)
-//          → tenant_admin da empresa DONA da oportunidade
 //          → psw_staff com concessão de admin naquela empresa (0045)
-//   NÃO PODE → member, viewer, e qualquer papel sem sessão
+//   NÃO PODE → tenant_admin da empresa DONA (reprocessar queima crédito de IA
+//              da PSW e pode reescrever campos derivados em massa — quem
+//              dispara é a PSW), member, viewer, e qualquer um sem sessão
 //
-// Suíte de unidade: Supabase e `isTenantAdminOf` são mocks. A prova de que o
-// predicado `isTenantAdminOf` casa com o SQL `is_tenant_admin_of()` vive em
-// tests/schema/tenant-admin-parity.test.ts — aqui provamos o WIRING: que a
-// action consulta o predicado certo contra o tenant DA OPORTUNIDADE, e que
-// nada é escrito quando a resposta é não.
+// Suíte de unidade: Supabase é mock. Duas metades aqui — o CONTRATO POR PAPEL
+// do predicado (ramos que não tocam o banco rodam de verdade; o ramo do
+// psw_staff roda contra o mock de `psw_tenant_admins`) e o WIRING da action
+// (que ela consulta o predicado contra o tenant DA OPORTUNIDADE e não escreve
+// nada quando a resposta é não). A prova de que `isTenantAdminOf` casa com o
+// SQL `is_tenant_admin_of()` vive em tests/schema/tenant-admin-parity.test.ts.
 // =============================================================================
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -32,7 +35,10 @@ vi.mock('@/lib/ai/enrichment', () => ({ enrichOpportunity: mockEnrich }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
 const mockGetCurrentProfile = vi.fn();
-const mockIsTenantAdminOf = vi.fn();
+// A action consulta UM predicado — é ele que o wiring precisa observar. O
+// contrato por papel dele é provado na segunda metade do arquivo, contra a
+// implementação REAL (importActual), para o mock daqui não poder mentir.
+const mockCanReprocess = vi.fn();
 vi.mock('@/lib/security/role', async () => {
   const actual = await vi.importActual<typeof import('@/lib/security/role')>(
     '@/lib/security/role',
@@ -40,30 +46,36 @@ vi.mock('@/lib/security/role', async () => {
   return {
     ...actual,
     getCurrentProfile: mockGetCurrentProfile,
-    isTenantAdminOf: mockIsTenantAdminOf,
+    canReprocessAiEnrichment: mockCanReprocess,
   };
 });
 
-// Chain do Supabase: `select(...).eq(...).maybeSingle()` (leitura) e
-// `update(...).eq(...).eq(...).select(...)` (marcação de pending).
+// Chain do Supabase: `select(...).eq(...)[.eq(...)].maybeSingle()` (leitura da
+// oportunidade, com um `eq`; leitura de `psw_tenant_admins` pelo par pessoa ×
+// empresa, com dois) e `update(...).eq(...).eq(...).select(...)` (marcação de
+// pending). O `eq` é auto-encadeável para servir aos dois formatos de leitura.
 const mockMaybeSingle = vi.fn();
 const mockUpdateSelect = vi.fn();
 const mockUpdate = vi.fn();
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: async () => ({
-    from: () => ({
-      select: () => ({
-        eq: () => ({ maybeSingle: mockMaybeSingle }),
+vi.mock('@/lib/supabase/server', () => {
+  const read: { eq: () => typeof read; maybeSingle: typeof mockMaybeSingle } = {
+    eq: () => read,
+    maybeSingle: mockMaybeSingle,
+  };
+  return {
+    createClient: async () => ({
+      from: () => ({
+        select: () => read,
+        update: (payload: unknown) => {
+          mockUpdate(payload);
+          return {
+            eq: () => ({ eq: () => ({ select: mockUpdateSelect }) }),
+          };
+        },
       }),
-      update: (payload: unknown) => {
-        mockUpdate(payload);
-        return {
-          eq: () => ({ eq: () => ({ select: mockUpdateSelect }) }),
-        };
-      },
     }),
-  }),
-}));
+  };
+});
 
 function profile(role: string, tenantId = OPP_TENANT) {
   return {
@@ -94,64 +106,81 @@ async function run(mode?: 'fill-empty' | 'overwrite') {
   return reprocessOpportunityEnrichment(OPP_ID, mode);
 }
 
+// =============================================================================
+// Metade 1 — CONTRATO POR PAPEL do predicado (implementação real)
+// =============================================================================
+describe('canReprocessAiEnrichment — quem a PSW autoriza', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  /** O predicado REAL, não o mock que a action enxerga. */
+  async function can(role: string, tenantId = OPP_TENANT, profileTenant = OPP_TENANT) {
+    const actual = await vi.importActual<typeof import('@/lib/security/role')>(
+      '@/lib/security/role',
+    );
+    return actual.canReprocessAiEnrichment(
+      role === 'none' ? null : (profile(role, profileTenant) as never),
+      tenantId,
+    );
+  }
+
+  it('platform_admin: pode, em qualquer empresa, sem consultar o banco', async () => {
+    expect(await can('platform_admin', OPP_TENANT, PSW_TENANT)).toBe(true);
+    expect(mockMaybeSingle).not.toHaveBeenCalled();
+  });
+
+  it('psw_staff COM concessão de admin naquela empresa (0045): pode', async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: { id: 'grant-1' } });
+    expect(await can('psw_staff', OPP_TENANT, PSW_TENANT)).toBe(true);
+  });
+
+  it('psw_staff SEM concessão naquela empresa: não pode', async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: null });
+    expect(await can('psw_staff', OPP_TENANT, PSW_TENANT)).toBe(false);
+  });
+
+  // A MUDANÇA desta regra: o admin do cliente atribui (canAssign) mas NÃO
+  // reprocessa. Sem consulta ao banco — o papel já basta para negar.
+  it('tenant_admin da empresa DONA: NÃO pode (gate é da PSW, não da empresa)', async () => {
+    expect(await can('tenant_admin')).toBe(false);
+    expect(mockMaybeSingle).not.toHaveBeenCalled();
+  });
+
+  it('member, viewer e sem sessão: não podem, sem consultar o banco', async () => {
+    expect(await can('member')).toBe(false);
+    expect(await can('viewer')).toBe(false);
+    expect(await can('none')).toBe(false);
+    expect(mockMaybeSingle).not.toHaveBeenCalled();
+  });
+});
+
+// =============================================================================
+// Metade 2 — WIRING da action: consulta o predicado certo, contra o tenant
+// certo, e não escreve nada quando a resposta é não
+// =============================================================================
 describe('reprocessOpportunityEnrichment — gate de papel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockIsTenantAdminOf.mockResolvedValue(false);
+    mockCanReprocess.mockResolvedValue(false);
   });
 
-  it('platform_admin: reprocessa em qualquer empresa', async () => {
-    mockGetCurrentProfile.mockResolvedValue(profile('platform_admin', PSW_TENANT));
+  it('autorizado: reprocessa, e o predicado é consultado contra o tenant DA OPORTUNIDADE', async () => {
+    mockGetCurrentProfile.mockResolvedValue(profile('psw_staff', PSW_TENANT));
+    mockCanReprocess.mockResolvedValue(true);
     readsOk();
 
-    const result = await run();
-
-    expect(result).toEqual({ ok: true });
-    // Super-admin nem consulta a concessão por empresa — o papel já basta.
-    expect(mockIsTenantAdminOf).not.toHaveBeenCalled();
+    expect(await run()).toEqual({ ok: true });
+    // O tenant do PROFILE (PSW) nunca entra na decisão — só o da oportunidade.
+    expect(mockCanReprocess).toHaveBeenCalledWith(
+      expect.objectContaining({ role: 'psw_staff' }),
+      OPP_TENANT,
+    );
     expect(mockEnrich).toHaveBeenCalledWith(OPP_ID, OPP_TENANT, {
       preserveFilled: true,
     });
   });
 
-  it('tenant_admin da empresa dona: reprocessa', async () => {
+  it('negado pelo predicado: bloqueado, nada é escrito', async () => {
     mockGetCurrentProfile.mockResolvedValue(profile('tenant_admin'));
-    mockIsTenantAdminOf.mockResolvedValue(true);
-    readsOk();
-
-    expect(await run()).toEqual({ ok: true });
-    // O predicado é consultado contra o tenant DA OPORTUNIDADE, não do profile.
-    expect(mockIsTenantAdminOf).toHaveBeenCalledWith(
-      expect.objectContaining({ role: 'tenant_admin' }),
-      OPP_TENANT,
-    );
-  });
-
-  it('psw_staff COM concessão de admin naquela empresa (0045): reprocessa', async () => {
-    mockGetCurrentProfile.mockResolvedValue(profile('psw_staff', PSW_TENANT));
-    mockIsTenantAdminOf.mockResolvedValue(true);
-    readsOk();
-
-    expect(await run()).toEqual({ ok: true });
-    expect(mockEnrich).toHaveBeenCalledWith(OPP_ID, OPP_TENANT, expect.anything());
-  });
-
-  it('psw_staff SEM concessão naquela empresa: bloqueado, nada é escrito', async () => {
-    mockGetCurrentProfile.mockResolvedValue(profile('psw_staff', PSW_TENANT));
-    mockIsTenantAdminOf.mockResolvedValue(false);
-    mockMaybeSingle.mockResolvedValueOnce({
-      data: { id: OPP_ID, tenant_id: OPP_TENANT },
-    });
-
-    const result = await run();
-
-    expect(result.ok).toBe(false);
-    expect(mockUpdate).not.toHaveBeenCalled();
-    expect(mockEnrich).not.toHaveBeenCalled();
-  });
-
-  it('member: bloqueado, nada é escrito', async () => {
-    mockGetCurrentProfile.mockResolvedValue(profile('member'));
     mockMaybeSingle.mockResolvedValueOnce({
       data: { id: OPP_ID, tenant_id: OPP_TENANT },
     });
@@ -160,19 +189,9 @@ describe('reprocessOpportunityEnrichment — gate de papel', () => {
 
     expect(result).toEqual({
       ok: false,
-      error: 'Apenas administradores da empresa podem reprocessar a análise da IA.',
+      error: 'Reprocessar a análise da IA é uma ação restrita à equipe da PSW.',
     });
     expect(mockUpdate).not.toHaveBeenCalled();
-    expect(mockEnrich).not.toHaveBeenCalled();
-  });
-
-  it('viewer: bloqueado, nada é escrito', async () => {
-    mockGetCurrentProfile.mockResolvedValue(profile('viewer'));
-    mockMaybeSingle.mockResolvedValueOnce({
-      data: { id: OPP_ID, tenant_id: OPP_TENANT },
-    });
-
-    expect((await run()).ok).toBe(false);
     expect(mockEnrich).not.toHaveBeenCalled();
   });
 
@@ -184,6 +203,7 @@ describe('reprocessOpportunityEnrichment — gate de papel', () => {
       error: 'Sessão expirada. Entre novamente.',
     });
     expect(mockMaybeSingle).not.toHaveBeenCalled();
+    expect(mockCanReprocess).not.toHaveBeenCalled();
     expect(mockEnrich).not.toHaveBeenCalled();
   });
 
@@ -195,6 +215,8 @@ describe('reprocessOpportunityEnrichment — gate de papel', () => {
       ok: false,
       error: 'Oportunidade não encontrada ou fora do seu escopo de acesso.',
     });
+    // Nem chega a perguntar quem pode — não há tenant-alvo para perguntar.
+    expect(mockCanReprocess).not.toHaveBeenCalled();
     expect(mockEnrich).not.toHaveBeenCalled();
   });
 });
@@ -202,8 +224,8 @@ describe('reprocessOpportunityEnrichment — gate de papel', () => {
 describe('reprocessOpportunityEnrichment — comportamento da execução', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockIsTenantAdminOf.mockResolvedValue(true);
-    mockGetCurrentProfile.mockResolvedValue(profile('tenant_admin'));
+    mockCanReprocess.mockResolvedValue(true);
+    mockGetCurrentProfile.mockResolvedValue(profile('platform_admin', PSW_TENANT));
   });
 
   it('modo "overwrite" chega ao enriquecimento como preserveFilled:false', async () => {

@@ -175,38 +175,6 @@ export async function fetchStaffWritableTenants(): Promise<TenantSummary[]> {
 }
 
 /**
- * Retorna o tenant + slug do usuário autenticado corrente.
- * Usado em páginas autenticadas que precisam do slug pra montar URLs públicas.
- */
-export async function getCurrentTenant(): Promise<PublicTenant | null> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('tenant_id, tenants(id, name, slug, brand_color, logo_path)')
-    .eq('id', user.id)
-    .single();
-
-  if (error || !data) return null;
-
-  const tenants = data.tenants as PublicTenantRow | PublicTenantRow[] | null;
-  const t = Array.isArray(tenants) ? tenants[0] : tenants;
-  if (!t) return null;
-  return {
-    id: t.id,
-    name: t.name,
-    slug: t.slug,
-    brandColor: normalizeHexColor(t.brand_color),
-    logoUrl: publicLogoUrl(t.logo_path),
-  };
-}
-
-/**
  * Empresas em que o usuário corrente pode IMPORTAR oportunidades em massa
  * (tela `/opportunities/import`, migration 0059).
  *
