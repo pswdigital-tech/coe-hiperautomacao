@@ -25,6 +25,7 @@ import {
   fetchTenantsByIds,
   type TenantSummary,
 } from '@/lib/tenants/queries';
+import { fetchEventOptions, resolveEventIdsBySlug } from '@/lib/events/queries';
 import {
   getCurrentProfile,
   isPlatformAdmin,
@@ -91,7 +92,22 @@ export default async function OpportunitiesPage({
   // Slug informado mas não resolvido = empresa inexistente (ou sem acesso).
   // NÃO cair silenciosamente em "Todas" — sinaliza o erro explicitamente.
   const empresaNotFound = !!empresaSlug && !scopedTenantId;
-  const listFilters = { ...filters, tenant: scopedTenantId };
+
+  // Filtro de evento (0066): `?evento=<slug>` — slug legível na URL, resolvido
+  // aqui para ids (mesma disciplina de `?empresa=`). O slug é único POR
+  // empresa, então a resolução usa a empresa em foco: a selecionada (PSW) ou
+  // a do próprio usuário (papéis de cliente). Sem empresa em foco (super-admin
+  // em "Todas"), o mesmo slug pode casar em várias — todas entram. Vazio =
+  // não encontrado → sinaliza, nunca cai em "todos os eventos".
+  const eventoSlug = sp.get('evento')?.trim() || undefined;
+  const eventTenantId =
+    scopedTenantId ?? (isAdmin || isStaff ? undefined : profile?.tenantId);
+  const eventIds =
+    eventoSlug && !empresaNotFound
+      ? await resolveEventIdsBySlug(eventoSlug, eventTenantId)
+      : undefined;
+  const eventoNotFound = !!eventoSlug && !!eventIds && eventIds.length === 0;
+  const listFilters = { ...filters, tenant: scopedTenantId, event: eventIds };
 
   // `viewer` é somente-leitura (role.ts) — decidido pelo profile já em mãos,
   // sem a segunda ida ao Auth + `profiles` que `isReadOnlyViewer()` custava.
@@ -124,9 +140,10 @@ export default async function OpportunitiesPage({
   // consulta pesada, mais as atribuições que dependem dela — chega depois, sem
   // segurar o resto da tela.
   // ---------------------------------------------------------------------------
-  const opportunities: Promise<OpportunityListItem[]> = empresaNotFound
-    ? Promise.resolve([])
-    : fetchOpportunities(listFilters);
+  const opportunities: Promise<OpportunityListItem[]> =
+    empresaNotFound || eventoNotFound
+      ? Promise.resolve([])
+      : fetchOpportunities(listFilters);
   // Rótulos de empresa para a coluna (staff + admin) e o filtro (só staff). Os
   // ids vêm das oportunidades JÁ retornadas pela RLS — não é um `select`
   // aberto em `tenants` — então nunca revelam empresas fora do escopo.
@@ -159,13 +176,23 @@ export default async function OpportunitiesPage({
           counts={counts}
           companies={companies}
           showCompanyFilter={showCompanyFilter}
-          tenantSlug={profile?.tenantSlug ?? null}
           readOnly={readOnly}
           companyScope={empresaSlug ?? ''}
         />
       </Suspense>
 
-      {empresaNotFound ? (
+      {eventoNotFound ? (
+        <div className="bg-wh border border-bdr rounded-xl p-12 text-center flex flex-col items-center gap-2">
+          <h2 className="text-[16px] font-bold text-txt">
+            Evento &quot;{eventoSlug}&quot; não encontrado
+          </h2>
+          <p className="text-[13px] text-mut max-w-sm">
+            Este evento não existe na empresa em foco (ou está fora do seu
+            acesso). Escolha outro no filtro &quot;Evento&quot; ou limpe os
+            filtros.
+          </p>
+        </div>
+      ) : empresaNotFound ? (
         <div className="bg-wh border border-bdr rounded-xl p-12 text-center flex flex-col items-center gap-2">
           <h2 className="text-[16px] font-bold text-txt">
             Empresa &quot;{empresaSlug}&quot; não encontrada
@@ -203,7 +230,6 @@ async function ToolbarSection({
   counts,
   companies,
   showCompanyFilter,
-  tenantSlug,
   readOnly,
   companyScope,
 }: {
@@ -213,7 +239,6 @@ async function ToolbarSection({
   counts: Promise<{ visible: number; total: number }>;
   companies: Promise<TenantSummary[]>;
   showCompanyFilter: boolean;
-  tenantSlug: string | null;
   readOnly: boolean;
   companyScope: string;
 }) {
@@ -223,7 +248,7 @@ async function ToolbarSection({
   // então não poder filtrar por ela era um buraco. Vêm em lista separada
   // (`externalMembers`) só para a toolbar agrupá-las sob outro rótulo — o
   // valor do filtro é o mesmo `profiles.id`.
-  const [areas, tools, tenantMembers, assignedMembers] = await Promise.all([
+  const [areas, tools, tenantMembers, assignedMembers, events] = await Promise.all([
     fetchAreas(scopedTenantId),
     // 0055 — catálogo de ferramentas para o filtro da toolbar. A RLS já limita
     // ao global + o do tenant do usuário.
@@ -234,6 +259,12 @@ async function ToolbarSection({
     empresaNotFound
       ? Promise.resolve([] as AssignableProfile[])
       : fetchAssignedProfiles(membersTenantId),
+    // 0066 — eventos da empresa em foco para o filtro "Evento". Sem empresa em
+    // foco (super-admin em "Todas") o filtro some: um slug de evento só faz
+    // sentido dentro de uma empresa.
+    membersTenantId && !empresaNotFound
+      ? fetchEventOptions(membersTenantId)
+      : Promise.resolve([]),
   ]);
   const tenantMemberIds = new Set(tenantMembers.map((m) => m.id));
   const externalMembers = assignedMembers
@@ -246,7 +277,7 @@ async function ToolbarSection({
       areas={areas}
       members={tenantMembers}
       externalMembers={externalMembers}
-      tenantSlug={tenantSlug}
+      events={events}
       readOnly={readOnly}
       companies={companies}
       showCompanyFilter={showCompanyFilter}

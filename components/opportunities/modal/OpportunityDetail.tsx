@@ -106,6 +106,8 @@ type Props = {
    * não muda.
    */
   companyName?: string | null;
+  /** 0066 — nome do evento em que foi levantada (rótulo; o dado é `event_id`). */
+  eventName?: string | null;
   // ── Plano de Atividades embutido (v0.5) ───────────────────────────────────
   /** Array PLANO de tarefas (raízes + subtarefas) já buscado pela página. */
   tasks: OpportunityTask[];
@@ -136,6 +138,7 @@ export function OpportunityDetail({
   history,
   readOnly = false,
   companyName = null,
+  eventName = null,
   tasks,
   taskAssignableProfiles,
   today,
@@ -302,6 +305,7 @@ export function OpportunityDetail({
       <DetailHeader
         opportunity={opportunity}
         companyName={companyName}
+        eventName={eventName}
         editMode={editMode}
         pending={pending}
         submitError={submitError}

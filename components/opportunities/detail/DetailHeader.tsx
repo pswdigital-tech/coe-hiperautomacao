@@ -18,6 +18,9 @@ type Props = {
   opportunity: Opportunity;
   /** Empresa dona — sinalização "por que estou vendo isto" para o staff PSW (Phase 17). */
   companyName?: string | null;
+  /** 0066 — evento em que foi levantada. Sempre existe (o padrão é "Registro
+   *  avulso"); o chip mostra qualquer um, para o "de onde veio" ser visível. */
+  eventName?: string | null;
   // ── Fluxo global de edição (D-12), dirigido por OpportunityDetail ──────────
   editMode: boolean;
   pending: boolean;
@@ -73,6 +76,7 @@ const PRIORITY_LABEL: Record<'alta' | 'media' | 'baixa', string> = {
 export function DetailHeader({
   opportunity: o,
   companyName = null,
+  eventName = null,
   editMode,
   pending,
   submitError,
@@ -160,6 +164,14 @@ export function DetailHeader({
                   title="Empresa dona desta oportunidade"
                 >
                   🏢 {companyName}
+                </span>
+              )}
+              {eventName && (
+                <span
+                  className="px-2 py-0.5 rounded-full bg-bg border border-bdr text-txt text-[11px] font-bold"
+                  title="Evento em que a oportunidade foi levantada"
+                >
+                  📅 {eventName}
                 </span>
               )}
               <AiEnrichmentBadge

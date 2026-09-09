@@ -20,6 +20,7 @@ import {
 import { CARGOS, CARGO_LABEL, type Cargo } from '@/lib/security/cargo';
 import type { TenantSummary } from '@/lib/tenants/queries';
 import type { AutomationToolOption } from '@/lib/opportunities/tools';
+import type { EventOption } from '@/lib/events/types';
 
 type Props = {
   /** Contagem da lista. Chega como Promise (streaming, ver page.tsx): a
@@ -34,7 +35,11 @@ type Props = {
    *  Entram no mesmo dropdown, num grupo separado — o filtro é o mesmo
    *  `?assignee=<profile.id>`. */
   externalMembers?: AssignableProfile[];
-  tenantSlug: string | null;
+  /** 0066 — eventos da empresa em foco, para o filtro "Evento" (`?evento=
+   *  <slug>`, resolvido no servidor como `?empresa=`). Vazio/só o padrão =
+   *  filtro escondido. O link do formulário saiu daqui: agora é por evento,
+   *  na tela /eventos. */
+  events?: EventOption[];
   /** Mantido por compatibilidade com os callers; sem uso desde a remoção do
    *  botão "Nova Oportunidade" (a criação agora é só pelo formulário público). */
   readOnly?: boolean;
@@ -76,26 +81,12 @@ export function Toolbar({
   areas,
   members,
   externalMembers = [],
-  tenantSlug,
+  events = [],
   companies,
   showCompanyFilter = false,
   tools = [],
   companyScope = '',
 }: Props) {
-  const [copied, setCopied] = useState(false);
-
-  async function copyPublicLink() {
-    if (!tenantSlug) return;
-    const url = `${window.location.origin}/r/${tenantSlug}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback se clipboard API falhar (ex: contexto não-seguro)
-      window.prompt('Copie o link manualmente:', url);
-    }
-  }
   const router = useRouter();
   const params = useSearchParams();
   const currentView = parseView(params.get('view'));
@@ -193,6 +184,19 @@ export function Toolbar({
     router.replace(qs ? `/opportunities?${qs}` : '/opportunities');
   }
 
+  // Filtro "Evento" (0066) — mesmo mecanismo de `?empresa=`: slug legível na
+  // URL, resolvido no servidor; não passa por `parseFilters`/`buildQuery`
+  // (que preserva params desconhecidos, então trocar outro filtro mantém o
+  // evento). Some quando a empresa em foco só tem o evento padrão.
+  const eventoSlug = params.get('evento') ?? '';
+  function changeEvent(slug: string) {
+    const sp = new URLSearchParams(params.toString());
+    if (slug) sp.set('evento', slug);
+    else sp.delete('evento');
+    const qs = sp.toString();
+    router.replace(qs ? `/opportunities?${qs}` : '/opportunities');
+  }
+
   function clearAll() {
     const view = params.get('view');
     setSearchText('');
@@ -212,6 +216,7 @@ export function Toolbar({
     !!filters.cargo ||
     !!filters.requestType ||
     !!companySlug ||
+    !!eventoSlug ||
     (filters.sort && filters.sort !== 'score_desc');
 
   const selectClass =
@@ -254,25 +259,6 @@ export function Toolbar({
           <span className="hidden md:inline">Exportar CSV</span>
         </a>
 
-        {tenantSlug && (
-          <button
-            type="button"
-            onClick={copyPublicLink}
-            title="Copiar o link do formulário público para cadastrar uma nova oportunidade — envie para quem vai preencher"
-            className={
-              'px-3 py-2 text-[13px] font-semibold rounded-lg flex items-center gap-1.5 transition-colors border whitespace-nowrap ' +
-              (copied
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-700'
-                : 'bg-wh text-txt border-bdr hover:bg-bg')
-            }
-          >
-            <span>{copied ? '✓' : '🔗'}</span>
-            <span className="hidden md:inline">
-              {copied ? 'Link copiado!' : 'Copiar link do formulário'}
-            </span>
-          </button>
-        )}
-
         {/* Switcher de view, à direita */}
         <div className="ml-auto flex items-center gap-1 bg-bg border border-bdr rounded-lg p-0.5">
           {VIEWS.map((v) => {
@@ -313,6 +299,25 @@ export function Toolbar({
               className={selectClass}
             />
           </Suspense>
+        )}
+        {events.length > 1 && (
+          <select
+            value={eventoSlug}
+            onChange={(e) => changeEvent(e.target.value)}
+            className={selectClass}
+            aria-label="Filtrar por evento"
+          >
+            <option value="">Todos os Eventos</option>
+            {events.map((ev) => (
+              <option key={ev.id} value={ev.slug}>
+                {ev.is_default
+                  ? `${ev.name} (sem evento)`
+                  : ev.status === 'closed'
+                    ? `${ev.name} (encerrado)`
+                    : ev.name}
+              </option>
+            ))}
+          </select>
         )}
         <select
           value={filters.requestType ?? ''}

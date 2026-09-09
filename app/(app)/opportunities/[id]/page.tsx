@@ -25,6 +25,7 @@ import {
   fetchTaskAssignableProfiles,
 } from '@/lib/opportunities/assignees';
 import { fetchTenantsByIds } from '@/lib/tenants/queries';
+import { fetchEventsByIds } from '@/lib/events/queries';
 import { fetchSddState } from '@/lib/opportunities/sdd/data';
 import { OpportunityDetail } from '@/components/opportunities/modal/OpportunityDetail';
 
@@ -120,6 +121,10 @@ export default async function OpportunityDetailPage({
     ? (await fetchTenantsByIds([opportunity.tenant_id]))[0] ?? null
     : null;
 
+  // 0066 — rótulo do evento em que foi levantada (a linha só carrega o id).
+  // Um lookup; degrada para null se a RLS não devolver (o chip some).
+  const event = (await fetchEventsByIds([opportunity.event_id]))[0] ?? null;
+
   // Candidatos a responsável de TAREFA (ACCESS-11/D-14) — inclui o staff PSW
   // atribuído a ESTA oportunidade, além das pessoas do tenant. Lista distinta
   // da de atribuição da oportunidade, que é privilégio de admin.
@@ -142,6 +147,7 @@ export default async function OpportunityDetailPage({
           history={history}
           readOnly={readOnly}
           companyName={companyTenant?.name ?? null}
+          eventName={event?.name ?? null}
           tasks={tasks}
           taskAssignableProfiles={taskAssignableProfiles}
           today={today}
