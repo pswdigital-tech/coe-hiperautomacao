@@ -7,6 +7,7 @@ import {
   type PublicSubmitInput,
 } from '@/lib/opportunities/actions';
 import type { PublicOpportunityOption, PublicTenant } from '@/lib/tenants/queries';
+import type { PublicEvent } from '@/lib/events/types';
 import {
   IntroStep,
   REQUEST_TYPE_LABEL,
@@ -42,6 +43,12 @@ type Props = {
   siteKey: string;
   /** Automações do tenant oferecidas no seletor de projeto (0035). */
   projects: PublicOpportunityOption[];
+  /**
+   * 0066 — evento da URL (`/r/<empresa>/<evento>`), já resolvido e ATIVO pela
+   * page. O slug vai à RPC, que revalida. null = link geral `/r/<empresa>`
+   * (a oportunidade cai no evento padrão da empresa).
+   */
+  event?: PublicEvent | null;
 };
 
 // Título + subtítulo por step (o chrome público; os componentes de step não
@@ -75,7 +82,7 @@ const STEP_COPY: Record<StepId, { title: string; subtitle: string }> = {
   contexto: { title: '', subtitle: '' },
 };
 
-export function PublicForm({ tenant, siteKey, projects }: Props) {
+export function PublicForm({ tenant, siteKey, projects, event = null }: Props) {
   const [data, setData] = useState<WizardFormData>(defaultFormData());
   // Porta de entrada — `started` false enquanto o tipo não for confirmado.
   const [started, setStarted] = useState(false);
@@ -273,6 +280,7 @@ export function PublicForm({ tenant, siteKey, projects }: Props) {
           tenant.slug,
           input,
           turnstileToken,
+          event?.slug ?? null,
         );
         // Token é single-use — Cloudflare retorna `timeout-or-duplicate` se reusado.
         // Sempre resetar após resposta, mesmo em erro.
@@ -314,8 +322,14 @@ export function PublicForm({ tenant, siteKey, projects }: Props) {
           <div className="p-8 text-center space-y-4">
             <p className="text-[15px] text-txt leading-relaxed">
               O time do CoE de Hiperautomação da <strong>{tenant.name}</strong> vai
-              analisar sua solicitação. Se precisar, entrarão em contato pelo
-              e-mail <strong>{data.email}</strong>.
+              analisar sua solicitação
+              {event ? (
+                <>
+                  , registrada no evento <strong>{event.name}</strong>
+                </>
+              ) : null}
+              . Se precisar, entrarão em contato pelo e-mail{' '}
+              <strong>{data.email}</strong>.
             </p>
             <button
               type="button"
@@ -371,12 +385,21 @@ export function PublicForm({ tenant, siteKey, projects }: Props) {
         </div>
 
         <div className="mt-6 md:mt-10">
+          {event && (
+            // 0066 — o evento pelo qual a pessoa chegou. Só rótulo: o vínculo
+            // real é o slug enviado à RPC, que revalida no banco.
+            <span className="inline-flex items-center gap-1.5 mb-3 px-2.5 py-1 rounded-full bg-white/15 text-[11px] font-bold backdrop-blur-sm max-w-full">
+              <span aria-hidden="true">📅</span>
+              <span className="truncate">{event.name}</span>
+            </span>
+          )}
           <h2 className="text-xl md:text-2xl font-extrabold leading-snug">
             Registrar solicitação ao CoE
           </h2>
           <p className="text-sm opacity-80 mt-2 leading-relaxed">
-            Nova oportunidade de automação, melhoria, incidente ou treinamento.
-            Leva cerca de 2 minutos.
+            {event?.description
+              ? event.description
+              : 'Nova oportunidade de automação, melhoria, incidente ou treinamento. Leva cerca de 2 minutos.'}
           </p>
         </div>
 
