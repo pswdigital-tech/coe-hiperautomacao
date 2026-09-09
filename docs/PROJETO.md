@@ -103,8 +103,20 @@ opportunities(
   status, persona_extras (jsonb nullable), formulario_extras (jsonb nullable),
   escopo_automacao (text[]), beneficios_esperados (text[]),
   observacao (text), risco (text),         -- notas livres legadas (0009; ≠ tabela opportunity_risks)
+  event_id (not null),                     -- 0066: evento em que foi levantada; trigger resolve_opportunity_event()
+                                           -- grava o padrão da empresa quando omitido e recusa evento de outra empresa
   created_at, updated_at, created_by
 )
+events(                                     -- NOVO 0066 — eventos de levantamento (workshops) por empresa
+  id, tenant_id, name, slug,               -- slug único POR empresa; vai na URL pública /r/<empresa>/<evento>
+  description, starts_at, ends_at,
+  status,                                  -- 'active' | 'closed' (encerrado = o link público não aceita mais)
+  is_default,                              -- "Registro avulso": 1 por empresa, criado por trigger em tenants;
+                                           -- recebe o que não foi vinculado a evento; não encerra, não some
+  created_by, created_at, updated_at
+)                                           -- view events_with_counts: + opportunities_count (visíveis)
+                                           -- RLS: lê quem lê as oportunidades da empresa;
+                                           -- escreve is_platform_admin() ∪ is_tenant_admin_of(tenant_id)
 opportunity_phases(
   id, opportunity_id, phase_key,           -- 'em_analise' | 'planejamento' | ...
   started_at, finished_at
