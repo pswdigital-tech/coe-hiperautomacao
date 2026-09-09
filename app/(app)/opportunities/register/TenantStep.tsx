@@ -1,6 +1,7 @@
 'use client';
 
 import type { TenantSummary } from '@/lib/tenants/queries';
+import type { EventOption } from '@/lib/events/types';
 
 // Etapa EXCLUSIVA do registro interno (staff PSW / super-admin): escolher em
 // nome de QUAL empresa a oportunidade será registrada. Deliberadamente NÃO
@@ -19,7 +20,22 @@ type Props = {
   error: string | null;
   onSelect: (id: string) => void;
   onContinue: () => void;
+  /**
+   * 0066 — eventos da empresa ESCOLHIDA (carregados pelo pai depois da
+   * seleção; a RLS de `events` já recortou). O padrão "Registro avulso" é a
+   * opção neutra — quem não levantou num evento deixa como está.
+   */
+  events?: EventOption[];
+  selectedEventId?: string | null;
+  eventsLoading?: boolean;
+  onSelectEvent?: (id: string) => void;
 };
+
+function eventLabel(e: EventOption): string {
+  if (e.is_default) return `${e.name} — sem evento`;
+  const date = new Date(`${e.starts_at}T00:00:00`).toLocaleDateString('pt-BR');
+  return `${e.name} · ${date}${e.status === 'closed' ? ' (encerrado)' : ''}`;
+}
 
 export function TenantStep({
   tenants,
@@ -27,6 +43,10 @@ export function TenantStep({
   error,
   onSelect,
   onContinue,
+  events = [],
+  selectedEventId = null,
+  eventsLoading = false,
+  onSelectEvent,
 }: Props) {
   return (
     <div>
@@ -66,6 +86,39 @@ export function TenantStep({
           </button>
         ))}
       </div>
+
+      {selectedId && onSelectEvent && (
+        <div className="mt-6">
+          <label
+            htmlFor="register-event"
+            className="block text-[12px] font-bold text-txt mb-1"
+          >
+            Evento de levantamento
+          </label>
+          <select
+            id="register-event"
+            value={selectedEventId ?? ''}
+            onChange={(e) => onSelectEvent(e.target.value)}
+            disabled={eventsLoading || events.length === 0}
+            className="w-full max-w-md px-3 py-2 border border-bdr rounded-lg text-[13px] bg-wh text-txt focus:outline-none focus:border-pril focus:ring-2 focus:ring-pril/15 disabled:opacity-60"
+          >
+            {eventsLoading && <option value="">Carregando eventos…</option>}
+            {!eventsLoading && events.length === 0 && (
+              <option value="">Registro avulso — sem evento</option>
+            )}
+            {events.map((e) => (
+              <option key={e.id} value={e.id}>
+                {eventLabel(e)}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-[11px] text-mut">
+            Em qual workshop ou levantamento esta demanda surgiu. Sem evento,
+            fica em &quot;Registro avulso&quot;. Eventos novos são criados em{' '}
+            <span className="font-semibold">Eventos</span>, no menu.
+          </p>
+        </div>
+      )}
 
       {error && (
         <div className="mt-5 text-[13px] text-red-800 bg-red-50 border border-red-200 rounded-lg px-4 py-3 dark:text-red-300 dark:bg-red-950/40 dark:border-red-800">

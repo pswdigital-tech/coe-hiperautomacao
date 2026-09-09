@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   createStaffOpportunity,
@@ -11,6 +11,8 @@ import type {
   PublicOpportunityOption,
   TenantSummary,
 } from '@/lib/tenants/queries';
+import { listTenantEvents } from '@/lib/events/actions';
+import type { EventOption } from '@/lib/events/types';
 import {
   IntroStep,
   REQUEST_TYPE_LABEL,
@@ -97,6 +99,12 @@ export function StaffRegisterForm({ tenants }: Props) {
     tenants.length === 1 ? tenants[0].id : null,
   );
   const [tenantError, setTenantError] = useState<string | null>(null);
+  // 0066 — evento da empresa escolhida. Carregado ao escolher a empresa;
+  // pré-seleciona o padrão ("Registro avulso"). Vai no payload como
+  // `event_id` e a RPC valida contra a empresa-alvo.
+  const [events, setEvents] = useState<EventOption[]>([]);
+  const [eventId, setEventId] = useState<string | null>(null);
+  const [eventsLoading, setEventsLoading] = useState(false);
 
   // Etapa 2 — tipo (idêntica ao público)
   const [requestType, setRequestType] = useState<PublicRequestType | null>(null);
@@ -129,6 +137,30 @@ export function StaffRegisterForm({ tenants }: Props) {
     setData((d) => ({ ...d, ...p }));
     setErrors({});
   }
+
+  /** Carrega os eventos da empresa escolhida e pré-seleciona o padrão. */
+  function loadEvents(id: string) {
+    setEventsLoading(true);
+    startTransition(async () => {
+      try {
+        const list = await listTenantEvents(id);
+        setEvents(list);
+        setEventId(list.find((e) => e.is_default)?.id ?? list[0]?.id ?? null);
+      } catch {
+        setEvents([]);
+        setEventId(null);
+      } finally {
+        setEventsLoading(false);
+      }
+    });
+  }
+
+  // Uma única empresa alcançável: já vem selecionada, então os eventos dela
+  // precisam ser carregados sem esperar um clique.
+  useEffect(() => {
+    if (tenants.length === 1) loadEvents(tenants[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /** Confirma a empresa e carrega as automações dela (seletor de projeto). */
   function confirmTenant() {
@@ -233,6 +265,7 @@ export function StaffRegisterForm({ tenants }: Props) {
     return {
       request_type: requestType ?? 'nova_oportunidade',
       parent_opportunity_id: needsProject ? parentId : null,
+      event_id: eventId,
       solicitante: (data.solicitante ?? '').trim(),
       email: (data.email ?? '').trim() || undefined,
       area: (data.area ?? '').trim(),
@@ -325,7 +358,16 @@ export function StaffRegisterForm({ tenants }: Props) {
         <div className="p-8 text-center space-y-4">
           <p className="text-[15px] text-txt leading-relaxed">
             Ela já está no pipeline da empresa <strong>{tenant?.name}</strong>,
-            com status <strong>Novo</strong>.
+            com status <strong>Novo</strong>
+            {(() => {
+              const ev = events.find((e) => e.id === eventId);
+              return ev && !ev.is_default ? (
+                <>
+                  , no evento <strong>{ev.name}</strong>
+                </>
+              ) : null;
+            })()}
+            .
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
             <button
@@ -429,8 +471,16 @@ export function StaffRegisterForm({ tenants }: Props) {
               // escolhido é de OUTRO tenant e a RPC o descartaria em silêncio.
               setParentId(null);
               setProjects([]);
+              // …e o de evento, pela mesma razão (a RPC recusaria com erro).
+              setEvents([]);
+              setEventId(null);
+              loadEvents(id);
             }}
             onContinue={confirmTenant}
+            events={events}
+            selectedEventId={eventId}
+            eventsLoading={eventsLoading}
+            onSelectEvent={(id) => setEventId(id || null)}
           />
         ) : stage === 'tipo' ? (
           <IntroStep

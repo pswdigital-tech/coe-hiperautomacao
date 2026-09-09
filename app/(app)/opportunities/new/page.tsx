@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { WizardShell } from '@/components/opportunities/wizard/WizardShell';
 import { getCurrentProfile, writesCrossTenant } from '@/lib/security/role';
+import { fetchEventOptions } from '@/lib/events/queries';
 
 export default async function NewOpportunityPage() {
   const profile = await getCurrentProfile();
@@ -16,5 +17,10 @@ export default async function NewOpportunityPage() {
   // para não deixar ninguém preencher 5 steps até levar o não.
   if (writesCrossTenant(profile)) redirect('/opportunities/register');
 
-  return <WizardShell mode="create" />;
+  // 0066 — eventos da PRÓPRIA empresa (é o tenant em que este wizard grava)
+  // para o seletor "Evento" do cabeçalho; só os ativos — registrar em evento
+  // encerrado é caso do staff, não do cliente.
+  const events = profile ? await fetchEventOptions(profile.tenantId, { activeOnly: true }) : [];
+
+  return <WizardShell mode="create" events={events} />;
 }

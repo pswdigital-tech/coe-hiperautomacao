@@ -27,18 +27,28 @@ import { ContextoStep } from './steps/ContextoStep';
 import { CriteriosStep } from './steps/CriteriosStep';
 import { BeneficiosStep } from './steps/BeneficiosStep';
 import { HelpGuide } from './HelpGuide';
+import type { EventOption } from '@/lib/events/types';
 
 type Props = {
   mode: 'create' | 'edit';
   opportunityId?: string;
   initialData?: WizardFormData;
+  /**
+   * 0066 — eventos da empresa para o seletor "Evento" (só mode='create').
+   * O padrão ("Registro avulso") vem pré-selecionado; com só ele na lista o
+   * seletor nem aparece. `event_id` segue no payload e o banco valida.
+   */
+  events?: EventOption[];
 };
 
-export function WizardShell({ mode, opportunityId, initialData }: Props) {
+export function WizardShell({ mode, opportunityId, initialData, events = [] }: Props) {
   const router = useRouter();
-  const [data, setData] = useState<WizardFormData>(
-    initialData ?? defaultFormData()
-  );
+  const [data, setData] = useState<WizardFormData>(() => {
+    if (initialData) return initialData;
+    const base = defaultFormData();
+    const defaultEvent = events.find((e) => e.is_default) ?? events[0];
+    return defaultEvent ? { ...base, event_id: defaultEvent.id } : base;
+  });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reachedIndex, setReachedIndex] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -217,6 +227,26 @@ export function WizardShell({ mode, opportunityId, initialData }: Props) {
         </header>
 
         <HelpGuide open={helpOpen} onClose={() => setHelpOpen(false)} />
+
+        {mode === 'create' && events.length > 1 && (
+          <div className="px-5 py-2.5 border-b border-bdr bg-bg flex items-center gap-3 flex-wrap">
+            <label htmlFor="wizard-event" className="text-[12px] font-bold text-txt">
+              📅 Evento
+            </label>
+            <select
+              id="wizard-event"
+              value={data.event_id ?? ''}
+              onChange={(e) => patch({ event_id: e.target.value || null })}
+              className="flex-1 min-w-[200px] px-2.5 py-1.5 border border-bdr rounded-lg text-[12px] bg-wh text-txt focus:outline-none focus:border-pril focus:ring-2 focus:ring-pril/15"
+            >
+              {events.map((ev) => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.is_default ? `${ev.name} — sem evento` : ev.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {steps.length > 1 && (
           <StepsNav
