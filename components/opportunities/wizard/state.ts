@@ -187,6 +187,11 @@ export function opportunityToFormData(opp: Opportunity): WizardFormData {
       opp.criterios_aceite && opp.criterios_aceite.length > 0
         ? opp.criterios_aceite
         : [''],
+    // 0065 — mesma convenção `['']` dos arrays acima.
+    premissas:
+      opp.premissas && opp.premissas.length > 0 ? opp.premissas : [''],
+    restricoes:
+      opp.restricoes && opp.restricoes.length > 0 ? opp.restricoes : [''],
     status: opp.status,
     responsavel: opp.responsavel ?? '',
     notas: opp.notas ?? '',

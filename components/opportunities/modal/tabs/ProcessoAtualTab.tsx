@@ -1,5 +1,10 @@
 import type { Opportunity } from '@/lib/opportunities/types';
 import {
+  CRITERIOS,
+  type CriterioKey,
+  type CriterioValor,
+} from '@/lib/opportunities/criteria-labels';
+import {
   StatusBadge,
   CriticidadeBadge,
   RpaFitBadge,
@@ -51,36 +56,9 @@ import {
 
 type Props = { opportunity: Opportunity };
 
-type CriterioValor = 'sim' | 'nao' | 'parcial';
-
-type CriterioKey =
-  | 'causaReclamacoes'
-  | 'totalmenteManual'
-  | 'regrasClaras'
-  | 'decisaoHumana'
-  | 'padronizacaoDocs'
-  | 'validacaoDados'
-  | 'schedulable'
-  | 'temDocumentacao';
-
-// `favoravelQuando` deixa a inversão EXPLÍCITA em vez de escondida num if:
-// `decisaoHumana` é favorável quando a resposta é NÃO (sem decisão humana
-// frequente, mais automatizável). Antes isso vivia só num comentário, e quem
-// lia a tela não tinha como saber por que um "Não" estava verde.
-const CRITERIOS: {
-  key: CriterioKey;
-  label: string;
-  favoravelQuando: 'sim' | 'nao';
-}[] = [
-  { key: 'causaReclamacoes', label: 'Causa reclamações quando falha', favoravelQuando: 'sim' },
-  { key: 'totalmenteManual', label: 'Totalmente manual', favoravelQuando: 'sim' },
-  { key: 'regrasClaras', label: 'Processo baseado em regras claras', favoravelQuando: 'sim' },
-  { key: 'decisaoHumana', label: 'Necessidade de decisão humana frequente', favoravelQuando: 'nao' },
-  { key: 'padronizacaoDocs', label: 'Padronização em documentos (PDFs, formulários)', favoravelQuando: 'sim' },
-  { key: 'validacaoDados', label: 'Validação ou conferência de dados simples', favoravelQuando: 'sim' },
-  { key: 'schedulable', label: 'Pode ser programado para horários específicos', favoravelQuando: 'sim' },
-  { key: 'temDocumentacao', label: 'Possui documentação do processo', favoravelQuando: 'sim' },
-];
+// Os 8 critérios, com `favoravelQuando` (a inversão de `decisaoHumana`), vêm de
+// `lib/opportunities/criteria-labels.ts` — fonte única compartilhada com o
+// wizard e com o PDF do SDD.
 
 // Pontos por fator — ESPELHO da tabela de `calcScore` (score.ts). Vive aqui só
 // para exibir a decomposição; o total NUNCA é recalculado a partir dela (usa

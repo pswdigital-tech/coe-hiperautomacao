@@ -18,6 +18,7 @@ import type {
 // legadas de opportunity_history), não mais só `opportunity_history`.
 import type { TimelineEntry } from '@/lib/audit/timeline';
 import { updateOpportunity } from '@/lib/opportunities/actions';
+import type { SddState } from '@/lib/opportunities/sdd/data';
 import type { OpportunityInput } from '@/lib/opportunities/schema';
 import {
   opportunityToFormData,
@@ -121,6 +122,9 @@ type Props = {
    * servidor pelo mesmo predicado de `canAssign`. Repassado ao DetailHeader.
    */
   canReprocessAi?: boolean;
+  /** Estado do SDD (0065) — repassado ao header, que monta o botão. */
+  sddState?: SddState | null;
+  canGenerateSdd?: boolean;
 };
 
 export function OpportunityDetail({
@@ -139,6 +143,8 @@ export function OpportunityDetail({
   assignableProfiles,
   canAssign,
   canReprocessAi = false,
+  sddState = null,
+  canGenerateSdd = false,
 }: Props) {
   // Aba inicial POR PAPEL: o perfil somente-leitura (o cliente) abre na Visão
   // Geral — é a única seção pensada para quem não trabalha na oportunidade
@@ -309,6 +315,8 @@ export function OpportunityDetail({
         assignableProfiles={assignableProfiles}
         canAssign={canAssign}
         canReprocessAi={canReprocessAi}
+        sddState={sddState}
+        canGenerateSdd={canGenerateSdd}
       />
 
       {/* Abas horizontais (v0.5) — o rail vertical saiu: com o Plano de
@@ -583,6 +591,39 @@ function renderTab(args: {
               placeholder="Ex: Relatório gerado em até 5 minutos"
               addLabel="+ Adicionar critério"
             />
+          </div>
+
+          {/* 0065 — Premissas e Restrições. Ficam aqui, e não na Governança
+              junto dos riscos, porque são condições de contorno do ESCOPO:
+              "fora do escopo" diz o que não será construído, premissa diz sob
+              que condições o escopo se sustenta e restrição diz o que o
+              limita. Editá-las longe do escopo é o caminho curto para as duas
+              listas se contradizerem. Mesmo par lado a lado de
+              Escopo × Fora do Escopo acima. */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-mut mb-2">
+                Premissas
+              </div>
+              <DynamicList
+                items={form.premissas ?? ['']}
+                onChange={(next) => patch({ premissas: next })}
+                placeholder="Ex: Acessos liberados até o início do desenvolvimento"
+                addLabel="+ Adicionar premissa"
+              />
+            </div>
+
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-mut mb-2">
+                Restrições
+              </div>
+              <DynamicList
+                items={form.restricoes ?? ['']}
+                onChange={(next) => patch({ restricoes: next })}
+                placeholder="Ex: Execução apenas fora do horário comercial"
+                addLabel="+ Adicionar restrição"
+              />
+            </div>
           </div>
 
           {/* Benefícios: a pontuação das 8 dimensões e o texto livre ficam

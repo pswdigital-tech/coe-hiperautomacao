@@ -42,6 +42,8 @@ export function SolucaoTab({ opportunity: o }: Props) {
   const escopo = (o.escopo_automacao ?? []).filter((s) => s.trim() !== '');
   const fora = (o.fora_escopo ?? []).filter((s) => s.trim() !== '');
   const aceite = (o.criterios_aceite ?? []).filter((s) => s.trim() !== '');
+  const premissas = (o.premissas ?? []).filter((s) => s.trim() !== '');
+  const restricoes = (o.restricoes ?? []).filter((s) => s.trim() !== '');
   const objetivo = (o.objetivo_projeto ?? '').trim();
   const descritos = (o.beneficios_esperados ?? []).filter((s) => s.trim() !== '');
   const qualitativo = (o.beneficio_qualitativo ?? '').trim();
@@ -155,6 +157,58 @@ export function SolucaoTab({ opportunity: o }: Props) {
           </Empty>
         )}
       </Card>
+
+      {/* ── Sob que condições ──────────────────────────────────────────── */}
+      {/* 0065 — par lado a lado, mesma forma de Escopo × Fora do escopo: as
+          duas se leem juntas ("assumimos X" / "mas estamos limitados por Y") e
+          separá-las esconde metade da condição. Ao contrário dos cartões
+          acima, o par INTEIRO some quando as duas listas estão vazias — é
+          conteúdo que só existe depois do refinamento, e um par de cartões
+          vazios no meio da narrativa sugere que alguém esqueceu de preencher
+          algo obrigatório. Ver §7 do brief: nada de card vazio. */}
+      {(premissas.length > 0 || restricoes.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+          <Card title="Premissas" count={premissas.length}>
+            {premissas.length > 0 ? (
+              <ul className="flex flex-col divide-y divide-bdr/60">
+                {premissas.map((item, i) => (
+                  <li key={i} className="py-2 flex gap-2.5 items-start">
+                    <span
+                      className="text-blue-600 dark:text-blue-400 text-[13px] leading-none mt-0.5 flex-shrink-0"
+                      aria-hidden="true"
+                    >
+                      ◆
+                    </span>
+                    <span className="text-[13px] text-txt leading-relaxed">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <Empty>Nenhuma premissa registrada.</Empty>
+            )}
+          </Card>
+
+          <Card title="Restrições" count={restricoes.length}>
+            {restricoes.length > 0 ? (
+              <ul className="flex flex-col divide-y divide-bdr/60">
+                {restricoes.map((item, i) => (
+                  <li key={i} className="py-2 flex gap-2.5 items-start">
+                    <span
+                      className="text-amber-600 dark:text-amber-400 text-[13px] leading-none mt-0.5 flex-shrink-0"
+                      aria-hidden="true"
+                    >
+                      ▲
+                    </span>
+                    <span className="text-[13px] text-txt leading-relaxed">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <Empty>Nenhuma restrição registrada.</Empty>
+            )}
+          </Card>
+        </div>
+      )}
 
       {/* ── O que se ganha ─────────────────────────────────────────────── */}
       <Card title="Valor esperado">

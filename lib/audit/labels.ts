@@ -65,6 +65,8 @@ export const FIELD_LABEL: Record<string, string> = {
   objetivo_projeto: 'Objetivo do Projeto', // 0061
   fora_escopo: 'Fora do escopo',
   criterios_aceite: 'Critérios de aceite',
+  premissas: 'Premissas', // 0065
+  restricoes: 'Restrições', // 0065
   fte_horas: 'FTE (h/mês)',
   fte: 'Faixa de FTE',
   criterios: 'Critérios',

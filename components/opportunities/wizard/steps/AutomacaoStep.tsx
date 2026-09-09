@@ -36,6 +36,60 @@ export function AutomacaoStep({ data, onChange, opportunityId }: Props) {
         />
       </div>
 
+      {/* 0065 — os quatro blocos abaixo alinham este step ao formulário de
+          edição do modal de detalhe (OpportunityDetail.tsx). Eles existiam lá
+          e não aqui: quem editava pelo wizard em mode='edit' simplesmente não
+          enxergava Fora do Escopo nem Critérios de Aceite, e salvava por cima
+          sem saber que os campos existiam. Duas superfícies de edição da mesma
+          oportunidade precisam mostrar o mesmo conjunto de campos. */}
+      <div>
+        <div className="text-[10px] font-bold uppercase tracking-wider text-mut mb-2">
+          Fora do Escopo
+        </div>
+        <DynamicList
+          items={data.fora_escopo ?? ['']}
+          onChange={(next) => onChange({ fora_escopo: next })}
+          placeholder="Ex: Integração com o sistema legado Y"
+          addLabel="+ Adicionar exclusão"
+        />
+      </div>
+
+      <div>
+        <div className="text-[10px] font-bold uppercase tracking-wider text-mut mb-2">
+          Critérios de Aceite
+        </div>
+        <DynamicList
+          items={data.criterios_aceite ?? ['']}
+          onChange={(next) => onChange({ criterios_aceite: next })}
+          placeholder="Ex: Relatório gerado em até 5 minutos"
+          addLabel="+ Adicionar critério"
+        />
+      </div>
+
+      <div>
+        <div className="text-[10px] font-bold uppercase tracking-wider text-mut mb-2">
+          Premissas
+        </div>
+        <DynamicList
+          items={data.premissas ?? ['']}
+          onChange={(next) => onChange({ premissas: next })}
+          placeholder="Ex: Acessos liberados até o início do desenvolvimento"
+          addLabel="+ Adicionar premissa"
+        />
+      </div>
+
+      <div>
+        <div className="text-[10px] font-bold uppercase tracking-wider text-mut mb-2">
+          Restrições
+        </div>
+        <DynamicList
+          items={data.restricoes ?? ['']}
+          onChange={(next) => onChange({ restricoes: next })}
+          placeholder="Ex: Execução apenas fora do horário comercial"
+          addLabel="+ Adicionar restrição"
+        />
+      </div>
+
       <div>
         <div className="text-[10px] font-bold uppercase tracking-wider text-mut mb-2">
           Benefícios Esperados

@@ -1,6 +1,11 @@
 'use client';
 
 import type { WizardFormData } from '../state';
+import {
+  CRITERIOS,
+  type CriterioKey,
+  type CriterioValor,
+} from '@/lib/opportunities/criteria-labels';
 
 type Props = {
   data: WizardFormData;
@@ -12,28 +17,10 @@ type Props = {
 // top-level, chaves camelCase EXATAS do schema (schema.ts §245-258) e valores
 // do criterioEnum em minúsculo ('sim' | 'nao' | 'parcial'). A UX click-to-cycle
 // é mantida (superior aos dropdowns do mockup).
-type CriterioValor = 'sim' | 'nao' | 'parcial';
-
-type CriterioKey =
-  | 'causaReclamacoes'
-  | 'totalmenteManual'
-  | 'regrasClaras'
-  | 'decisaoHumana'
-  | 'padronizacaoDocs'
-  | 'validacaoDados'
-  | 'schedulable'
-  | 'temDocumentacao';
-
-const CRITERIOS: { key: CriterioKey; label: string }[] = [
-  { key: 'causaReclamacoes', label: 'Causa reclamações quando falha' },
-  { key: 'totalmenteManual', label: 'Totalmente Manual' },
-  { key: 'regrasClaras', label: 'Processo baseado em regras claras' },
-  { key: 'decisaoHumana', label: 'Necessidade de decisão humana frequente' },
-  { key: 'padronizacaoDocs', label: 'Padronização em documentos (PDFs, formulários)' },
-  { key: 'validacaoDados', label: 'Validação ou conferência de dados simples' },
-  { key: 'schedulable', label: 'Pode ser programado para horários específicos' },
-  { key: 'temDocumentacao', label: 'Possui documentação do processo' },
-];
+// Os 8 critérios, os tipos e os rótulos vêm de `lib/opportunities/criteria-labels.ts`
+// (fonte única). A lista vivia aqui E em ProcessoAtualTab, e as duas cópias já
+// tinham divergido num rótulo. `favoravelQuando` existe lá e não é usado neste
+// step: aqui a pessoa RESPONDE o critério, não lê o diagnóstico.
 
 function next(v: CriterioValor | undefined): CriterioValor {
   if (v === 'sim') return 'nao';

@@ -659,6 +659,11 @@ export type Database = {
            *  `objetivo_projeto` acima, exibido nas duas seções. */
           fora_escopo: string[];
           criterios_aceite: string[];
+          /** 0065 — insumos da seção "Premissas e restrições" do SDD. Mesma
+           *  forma de `fora_escopo`/`criterios_aceite` acima: text[] not null
+           *  default '{}', então nunca chegam null — array vazio é o vazio. */
+          premissas: string[];
+          restricoes: string[];
           status: OpportunityStatus;
           responsavel: string | null;
           notas: string | null;
@@ -731,6 +736,8 @@ export type Database = {
           objetivo_projeto?: string | null; // 0061
           fora_escopo?: string[]; // 0062
           criterios_aceite?: string[]; // 0062
+          premissas?: string[]; // 0065
+          restricoes?: string[]; // 0065
           status?: OpportunityStatus;
           responsavel?: string | null;
           notas?: string | null;
@@ -985,6 +992,15 @@ export type Database = {
           storage_path: string | null;
           tipo: string | null;
           size_bytes: number | null;
+          /** 0065 — null = upload manual de uma pessoa (todo o acervo
+           *  anterior). Não-null = documento GERADO pelo sistema; hoje o
+           *  único valor é 'sdd'. Anda em PAR com `gerado_versao`: o CHECK
+           *  `opportunity_documents_gerado_chk` recusa meio-preenchido. */
+          gerado_tipo: string | null;
+          /** 0065 — versão do documento gerado, 1..N, imutável. É o número
+           *  impresso na capa do PDF. Único por (oportunidade, tipo) via
+           *  índice parcial — duplo clique falha em vez de criar duas v2. */
+          gerado_versao: number | null;
           created_by: string | null;
           created_at: string;
         };
@@ -998,6 +1014,8 @@ export type Database = {
           storage_path?: string | null;
           tipo?: string | null;
           size_bytes?: number | null;
+          gerado_tipo?: string | null; // 0065
+          gerado_versao?: number | null; // 0065
           created_by?: string | null;
           created_at?: string;
         };

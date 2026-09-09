@@ -565,6 +565,8 @@ export async function createOpportunity(
       objetivo_projeto: data.objetivo_projeto || null, // 0061
       fora_escopo: data.fora_escopo ?? [],
       criterios_aceite: data.criterios_aceite ?? [],
+      premissas: data.premissas ?? [], // 0065
+      restricoes: data.restricoes ?? [], // 0065
       status: data.status,
       responsavel: data.responsavel || null,
       notas: data.notas || null,
@@ -715,6 +717,8 @@ export async function updateOpportunity(
       objetivo_projeto: data.objetivo_projeto || null, // 0061
       fora_escopo: data.fora_escopo ?? [],
       criterios_aceite: data.criterios_aceite ?? [],
+      premissas: data.premissas ?? [], // 0065
+      restricoes: data.restricoes ?? [], // 0065
       responsavel: data.responsavel || null,
       notas: data.notas || null,
       observacao: data.observacao || null,

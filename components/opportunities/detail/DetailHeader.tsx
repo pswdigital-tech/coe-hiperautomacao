@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { Opportunity } from '@/lib/opportunities/types';
 import type { Assignee, AssignableProfile } from '@/lib/opportunities/assignee-types';
+import type { SddState } from '@/lib/opportunities/sdd/data';
 import { getInitials, scoreColor } from '@/lib/opportunities/utils';
 import { StatusSelector } from '@/components/opportunities/modal/StatusSelector';
 import { DeleteButton } from '@/components/opportunities/modal/DeleteButton';
@@ -11,6 +12,7 @@ import { AiEnrichmentBadge } from '@/components/opportunities/modal/AiEnrichment
 import { ReprocessAiButton } from '@/components/opportunities/modal/ReprocessAiButton';
 import { getLastListUrl } from '@/lib/opportunities/filters-storage';
 import { AssigneesStack } from './AssigneesStack';
+import { SddButton } from './SddButton';
 
 type Props = {
   opportunity: Opportunity;
@@ -32,14 +34,23 @@ type Props = {
   assignableProfiles: AssignableProfile[];
   canAssign: boolean;
   /**
-   * Reprocessar o enriquecimento por IA é privilégio de admin: super-admin da
-   * plataforma, staff PSW com concessão de admin NESTA empresa (0045) ou admin
-   * da própria empresa. Resolvido no servidor
-   * (`app/(app)/opportunities/[id]/page.tsx`) pelo mesmo predicado de
-   * `canAssign` — aqui só decide o que é montado; o bloqueio real está na
-   * Server Action e na RLS.
+   * Reprocessar o enriquecimento por IA é privilégio da PSW: super-admin da
+   * plataforma ou staff PSW com concessão de admin NESTA empresa (0045). O
+   * admin da própria empresa cliente NÃO entra — diferente de `canAssign`, que
+   * o inclui. Resolvido no servidor (`app/(app)/opportunities/[id]/page.tsx`)
+   * por `canReprocessAiEnrichment()`; aqui só decide o que é montado, o
+   * bloqueio real está na Server Action.
    */
   canReprocessAi?: boolean;
+  // ── Documento de Desenho da Solução (0065) ────────────────────────────────
+  /**
+   * Estado do SDD: última versão emitida e se os dados mudaram depois dela.
+   * Resolvido no servidor (`fetchSddState`). `null` só enquanto a página não
+   * repassa o dado — o botão some, em vez de piscar um estado errado.
+   */
+  sddState?: SddState | null;
+  /** Emitir versão nova é gate de editor; baixar não tem gate. */
+  canGenerateSdd?: boolean;
 };
 
 const PRIORITY_LABEL: Record<'alta' | 'media' | 'baixa', string> = {
@@ -75,6 +86,8 @@ export function DetailHeader({
   assignableProfiles,
   canAssign,
   canReprocessAi = false,
+  sddState = null,
+  canGenerateSdd = false,
 }: Props) {
   const [managing, setManaging] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -254,6 +267,18 @@ export function DetailHeader({
                   ? 'border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-950/60'
                   : 'border border-bdr bg-wh text-txt hover:bg-bg')
               }
+            />
+          )}
+
+          {/* O SDD é a peça que vai ao cliente — fica na barra junto das demais
+              ações recorrentes. Some no modo edição (Salvar/Cancelar mandam) e
+              some inteiro para quem não pode gerar E nunca teve versão emitida:
+              um botão que não faz nada é pior que botão nenhum. */}
+          {sddState && !editMode && (
+            <SddButton
+              opportunityId={o.id}
+              state={sddState}
+              canGenerate={canGenerateSdd}
             />
           )}
 

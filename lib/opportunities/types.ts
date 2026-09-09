@@ -12,6 +12,40 @@ export type OpportunitySource = Opportunity['source'];
 export type AutomationTool = Opportunity['ferramenta'];
 export type PriorityLevel = Opportunity['priority_level'];
 
+/**
+ * Recorte ENXUTO da listagem — só o que lista/cards/kanban/gantt/KPIs/relatório
+ * de fato leem (`OPPORTUNITY_LIST_COLUMNS` em queries.ts é a whitelist SQL
+ * correspondente; os dois têm que andar juntos). Deixa de fora os textos
+ * longos e os JSONB da linha completa (`objetivo_projeto`, `criterios_aceite`,
+ * `premissas`, `restricoes`, `persona_extras`, `formulario_extras`…), que só o
+ * detalhe e o export consomem — era esse payload inteiro, serializado no RSC
+ * a cada navegação, que pesava na troca de tela.
+ */
+export type OpportunityListItem = Pick<
+  Opportunity,
+  | 'id'
+  | 'tenant_id'
+  | 'seq_id'
+  | 'source'
+  | 'solicitante'
+  | 'area'
+  | 'subarea'
+  | 'processo'
+  | 'frequencia'
+  | 'num_pessoas'
+  | 'ferramentas'
+  | 'esforco'
+  | 'complexidade'
+  | 'status'
+  | 'fte_horas'
+  | 'rpa_score'
+  | 'criticidade'
+  | 'created_at'
+  | 'priority_tag'
+  | 'score'
+  | 'priority_level'
+>;
+
 // ─── Phase 7.6: AI Enrichment fields ────────────────────────────────────
 // Os campos `ai_enrichment_status`, `ai_enrichment_error`, `ai_enriched_at`
 // são propagados automaticamente do schema do DB via

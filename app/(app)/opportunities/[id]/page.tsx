@@ -16,6 +16,7 @@ import {
   isPlatformAdmin,
   isTenantAdminOf,
   isPswStaff,
+  canReprocessAiEnrichment,
 } from '@/lib/security/role';
 import {
   fetchAssigneesForOpportunity,
@@ -24,6 +25,7 @@ import {
   fetchTaskAssignableProfiles,
 } from '@/lib/opportunities/assignees';
 import { fetchTenantsByIds } from '@/lib/tenants/queries';
+import { fetchSddState } from '@/lib/opportunities/sdd/data';
 import { OpportunityDetail } from '@/components/opportunities/modal/OpportunityDetail';
 
 /**
@@ -44,18 +46,30 @@ export default async function OpportunityDetailPage({
   const { id } = await params;
   const opportunity = await fetchOpportunityById(id);
   if (!opportunity) notFound();
-  const [phases, risks, documents, notes, history, readOnly, assignees, profile, tasks] =
-    await Promise.all([
-      fetchPhasesForOpportunity(id),
-      fetchRisksForOpportunity(id),
-      fetchDocumentsForOpportunity(id),
-      fetchNotesForOpportunity(id),
-      fetchOpportunityTimeline(id),
-      isReadOnlyViewer(),
-      fetchAssigneesForOpportunity(id),
-      getCurrentProfile(),
-      fetchTasksForOpportunity(id),
-    ]);
+  const [
+    phases,
+    risks,
+    documents,
+    notes,
+    history,
+    readOnly,
+    assignees,
+    profile,
+    tasks,
+    sddState,
+  ] = await Promise.all([
+    fetchPhasesForOpportunity(id),
+    fetchRisksForOpportunity(id),
+    fetchDocumentsForOpportunity(id),
+    fetchNotesForOpportunity(id),
+    fetchOpportunityTimeline(id),
+    isReadOnlyViewer(),
+    fetchAssigneesForOpportunity(id),
+    getCurrentProfile(),
+    fetchTasksForOpportunity(id),
+    // 0065 — última versão do SDD + se os dados mudaram depois dela.
+    fetchSddState(id),
+  ]);
 
   // Atribuir é privilégio de admin (0032). Quem opera pela PSW — platform_admin
   // (em qualquer empresa) ou psw_staff com concessão de admin naquela empresa
@@ -77,13 +91,18 @@ export default async function OpportunityDetailPage({
   const canAssign =
     isPlatformAdmin(profile) || (await isTenantAdminOf(profile, opportunity.tenant_id));
 
-  // Reprocessar a análise da IA (lib/ai/reprocess-actions.ts) tem EXATAMENTE o
-  // mesmo gate de atribuir: super-admin da plataforma, staff PSW com concessão
-  // de admin nesta empresa (0045) ou admin da própria empresa. Reusa o valor já
-  // resolvido em vez de repetir a ida ao banco de `isTenantAdminOf`; a constante
-  // separada existe para que mudar um dos dois gates no futuro não mude o outro
-  // por acidente. O bloqueio real continua na Server Action + RLS.
-  const canReprocessAi = canAssign;
+  // Reprocessar a análise da IA (lib/ai/reprocess-actions.ts) é gate de PSW, e
+  // NÃO o mesmo de atribuir: só super-admin da plataforma e staff PSW com
+  // concessão de admin NESTA empresa (0045). O `tenant_admin` do cliente, que
+  // atribui normalmente, não vê o botão — a ação queima crédito de IA da PSW e
+  // pode reescrever campos derivados em massa. O predicado mora em
+  // `canReprocessAiEnrichment()` justamente para o gate visual e o da Server
+  // Action nunca divergirem; o bloqueio real é o da action (o enriquecimento
+  // roda com service role, então ali a RLS não é a última linha).
+  const canReprocessAi = await canReprocessAiEnrichment(
+    profile,
+    opportunity.tenant_id
+  );
   const assignableProfiles = !canAssign
     ? []
     : isPlatformAdmin(profile) || isPswStaff(profile)
@@ -130,6 +149,11 @@ export default async function OpportunityDetailPage({
           assignableProfiles={assignableProfiles}
           canAssign={canAssign}
           canReprocessAi={canReprocessAi}
+          sddState={sddState}
+          // Gerar SDD tem o gate de EDITOR (requireEditorRole), não o de admin:
+          // é a mesma fronteira de qualquer outra escrita na oportunidade.
+          // Baixar não tem gate — o viewer pega o próprio documento.
+          canGenerateSdd={!readOnly}
         />
       </div>
     </div>

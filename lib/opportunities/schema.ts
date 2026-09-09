@@ -255,6 +255,20 @@ const baseSchema = z.object({
     .max(20, 'Máximo 20 itens')
     .optional()
     .default([]),
+  // 0065 — insumos da seção "Premissas e restrições" do SDD. Mesmos limites
+  // dos dois arrays acima (200 chars por item, 20 itens): é a mesma natureza
+  // de dado (lista curta de frases) e divergir nos tetos só criaria surpresa
+  // na hora de preencher.
+  premissas: z
+    .array(z.string().max(200, 'Item excede 200 caracteres'))
+    .max(20, 'Máximo 20 itens')
+    .optional()
+    .default([]),
+  restricoes: z
+    .array(z.string().max(200, 'Item excede 200 caracteres'))
+    .max(20, 'Máximo 20 itens')
+    .optional()
+    .default([]),
   status: statusEnum.default('novo'),
   responsavel: z
     .string()
